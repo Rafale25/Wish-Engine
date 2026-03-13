@@ -3,10 +3,9 @@ cmake_minimum_required(VERSION 3.25.0)
 set(PROJECT_NAME "WishEngine")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
-project(${PROJECT_NAME})
-
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) // slower compilation, more optimization
+
+project(${PROJECT_NAME})
 
 file(GLOB_RECURSE SRC_C CONFIGURE_DEPENDS ./src/*.c)
 file(GLOB_RECURSE SRC_CPP CONFIGURE_DEPENDS ./src/*.cpp)
@@ -14,10 +13,44 @@ file(GLOB_RECURSE SRC_HEADERS CONFIGURE_DEPENDS ./src/*.hpp)
 
 add_executable(${PROJECT_NAME} ${SRC_CPP} ${SRC_C} ${SRC_HEADERS})
 
-# target_include_directories(${PROJECT_NAME}
-#     PRIVATE
-#         ./src/game/
-# )
+set(THIRD_PARTY_DIR ./submodules/)
+
+# GLFW #
+set(GLFW_DIR ${THIRD_PARTY_DIR}/glfw)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+include_directories(${GLFW_DIR}/include)
+add_subdirectory(${GLFW_DIR} ${CMAKE_CURRENT_BINARY_DIR}/glfw)
+# -- #
+
+# GLM #
+set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLM_BUILD_LIBRARY ON CACHE BOOL "" FORCE)
+set(DGLM_BUILD_INSTALL ON CACHE BOOL "" FORCE)
+# add_definitions(-D GLM_ENABLE_EXPERIMENTAL) ## for GLM
+add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
+# include_directories("submodules/glm/glm")
+# -- #
+
+include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
+
+# find_package(Vulkan REQUIRED)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        C:\\VulkanSDK\\1.4.341.1\\Include
+        # ./src/game/
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    glfw
+    glm
+    # $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+)
+
+# target_link_libraries(${PROJECT_NAME} PUBLIC $ENV{VULKAN_SDK}/Lib)
 
 # target_compile_definitions(myEngine PUBLIC
 #     RESSOURCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/"

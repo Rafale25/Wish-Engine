@@ -1,0 +1,45 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "conf-common",
+            "description": "",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            },
+            "environment": {
+                "BASE_CMAKE_CXX_FLAGS": "-W -Wall -Wextra -Wpedantic -Wno-unused-variable -Wno-unused-parameter -Wno-strict-aliasing -fdiagnostics-color -Wmissing-designated-field-initializers"
+            }
+        },
+        {
+            "name": "clang-debug",
+            "displayName": "Clang Debug",
+            "inherits": "conf-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CXX_FLAGS": "$env{BASE_CMAKE_CXX_FLAGS} -Wshadow-uncaptured-local -Wno-gnu-zero-variadic-macro-arguments -g3 -fno-omit-frame-pointer"
+            }
+        },
+        {
+            "name": "clang-release",
+            "displayName": "Clang Release",
+            "inherits": "conf-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CXX_FLAGS": "$env{BASE_CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments -O3"
+            }
+        }
+    ]
+}
