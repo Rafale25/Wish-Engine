@@ -42,7 +42,8 @@ include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-        C:\\VulkanSDK\\1.4.341.1\\Include
+        C:/VulkanSDK/1.4.341.1/Include
+        ./include
         # ./src/game/
 )
 

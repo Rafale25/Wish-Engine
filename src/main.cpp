@@ -335,6 +335,12 @@ int main(void)
     };
     chk(vkCreateCommandPool(device, &commandPoolCI, nullptr, &commandPool));
 
+    VkCommandBufferAllocateInfo cbAllocCI{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = commandPool,
+        .commandBufferCount = maxFramesInFlight
+    };
+    chk(vkAllocateCommandBuffers(device, &cbAllocCI, commandBuffers.data()));
 
 
 
