@@ -33,9 +33,12 @@ add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
 # include_directories("submodules/glm/glm")
 # -- #
 
+# VMA
+add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
+# -- #
+
 include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
 
-# find_package(Vulkan REQUIRED)
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
@@ -43,10 +46,10 @@ target_include_directories(${PROJECT_NAME}
         # ./src/game/
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
-    # $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    GPUOpen::VulkanMemoryAllocator
     $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
 )
 
