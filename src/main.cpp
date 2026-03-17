@@ -9,6 +9,14 @@
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
 
+#include "stb_image.h"
+
+#include <ktx.h>
+#include <ktxvulkan.h>
+
+#include "slang/slang.h"
+#include "slang/slang-com-ptr.h"
+
 #include <iostream>
 #include <vector>
 
@@ -19,6 +27,50 @@ static inline void chk(VkResult result) {
 	}
 }
 
+ktxTexture2* loadTextureFromFile(const char* path) {
+    int32_t width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 4);
+
+    ktxTexture2* texture;                   // For KTX2
+    ktxTextureCreateInfo createInfo;
+    ktx_uint32_t level, layer, faceSlice;
+    FILE* src;
+    ktx_size_t srcSize;
+
+    // createInfo.glInternalformat = GL_RGB8;   // Ignored if creating a ktxTexture2.
+    // createInfo.vkFormat = VK_FORMAT_R8G8B8_UNORM;   // Ignored if creating a ktxTexture1.
+    createInfo.vkFormat = VK_FORMAT_R8G8B8A8_UNORM;   // Ignored if creating a ktxTexture1.
+    createInfo.baseWidth = width;
+    createInfo.baseHeight = height;
+    createInfo.baseDepth = 1;
+    createInfo.numDimensions = 2;
+    createInfo.numLevels = 1;
+    createInfo.numLayers = 1;
+    createInfo.numFaces = 1;
+    createInfo.isArray = KTX_FALSE;
+    createInfo.generateMipmaps = KTX_FALSE;
+
+    // Call ktxTexture1_Create to create a KTX texture.
+    KTX_error_code result = ktxTexture2_Create(
+                                &createInfo,
+                                KTX_TEXTURE_CREATE_ALLOC_STORAGE,
+                                &texture);
+
+    ktx_size_t offset;
+    ktxTexture_GetImageOffset(
+        ktxTexture(texture),
+        0,  // level
+        0,  // layer
+        0,  // face
+        &offset
+    );
+
+    memcpy(texture->pData + offset, data, width * height * 4);
+
+    return texture;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -27,7 +79,7 @@ int main(void)
         return -1;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "Wish Engine", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -343,7 +395,284 @@ int main(void)
     chk(vkAllocateCommandBuffers(device, &cbAllocCI, commandBuffers.data()));
 
 
+    // TEXTURE LOADING
 
+    ktxTexture2* ktxTexture = loadTextureFromFile("./Gigachad.jpg");
+
+    VkImageCreateInfo texImgCI{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = ktxTexture2_GetVkFormat(ktxTexture),
+        .extent = {.width = ktxTexture->baseWidth, .height = ktxTexture->baseHeight, .depth = 1 },
+        .mipLevels = ktxTexture->numLevels,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    struct Texture {
+        VmaAllocation allocation{ VK_NULL_HANDLE };
+        VkImage image{ VK_NULL_HANDLE };
+        VkImageView view{ VK_NULL_HANDLE };
+        VkSampler sampler{ VK_NULL_HANDLE };
+    };
+    std::array<Texture, 3> textures{};
+
+    VmaAllocationCreateInfo texImageAllocCI{ .usage = VMA_MEMORY_USAGE_AUTO };
+    chk(vmaCreateImage(allocator, &texImgCI, &texImageAllocCI, &textures[0].image, &textures[0].allocation, nullptr));
+
+
+    VkImageViewCreateInfo texVewCI{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = textures[0].image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = texImgCI.format,
+        .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = ktxTexture->numLevels, .layerCount = 1 }
+    };
+    chk(vkCreateImageView(device, &texVewCI, nullptr, &textures[0].view));
+
+    VkBuffer imgSrcBuffer{};
+    VmaAllocation imgSrcAllocation{};
+    VmaAllocationInfo imgSrcAllocInfo{};
+    VkBufferCreateInfo imgSrcBufferCI{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = (uint32_t)ktxTexture->dataSize,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+    };
+    VmaAllocationCreateInfo imgSrcAllocCI{
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO
+    };
+    chk(vmaCreateBuffer(allocator, &imgSrcBufferCI, &imgSrcAllocCI, &imgSrcBuffer, &imgSrcAllocation, &imgSrcAllocInfo));
+
+    memcpy(imgSrcAllocInfo.pMappedData, ktxTexture->pData, ktxTexture->dataSize);
+
+
+    VkFenceCreateInfo fenceOneTimeCI{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+    };
+    VkFence fenceOneTime{};
+    chk(vkCreateFence(device, &fenceOneTimeCI, nullptr, &fenceOneTime));
+    VkCommandBuffer cbOneTime{};
+    VkCommandBufferAllocateInfo cbOneTimeAI{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = commandPool,
+        .commandBufferCount = 1
+    };
+    chk(vkAllocateCommandBuffers(device, &cbOneTimeAI, &cbOneTime));
+
+
+    VkCommandBufferBeginInfo cbOneTimeBI{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+    chk(vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI));
+    VkImageMemoryBarrier2 barrierTexImage{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+        .srcAccessMask = VK_ACCESS_2_NONE,
+        .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .image = textures[0].image,
+        .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = ktxTexture->numLevels, .layerCount = 1 }
+    };
+    VkDependencyInfo barrierTexInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrierTexImage
+    };
+    vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
+    std::vector<VkBufferImageCopy> copyRegions{};
+    for (uint32_t j = 0; j < ktxTexture->numLevels; ++j) {
+        ktx_size_t mipOffset{0};
+        // KTX_error_code ret = ktxTexture_GetImageOffset(ktxTexture, j, 0, 0, &mipOffset);
+        KTX_error_code ret = ktxTexture2_GetImageOffset(ktxTexture, j, 0, 0, &mipOffset);
+        copyRegions.push_back({
+            .bufferOffset = mipOffset,
+            .imageSubresource{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = (uint32_t)j, .layerCount = 1},
+            .imageExtent{.width = ktxTexture->baseWidth >> j, .height = ktxTexture->baseHeight >> j, .depth = 1 },
+        });
+    }
+    vkCmdCopyBufferToImage(cbOneTime, imgSrcBuffer, textures[0].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+    VkImageMemoryBarrier2 barrierTexRead{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .image = textures[0].image,
+        .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = ktxTexture->numLevels, .layerCount = 1 }
+    };
+    barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
+    vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
+    chk(vkEndCommandBuffer(cbOneTime));
+    VkSubmitInfo oneTimeSI{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cbOneTime
+    };
+    chk(vkQueueSubmit(queue, 1, &oneTimeSI, fenceOneTime));
+    chk(vkWaitForFences(device, 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
+
+    // -----------------------------------
+
+    VkSamplerCreateInfo samplerCI{
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .anisotropyEnable = VK_TRUE,
+        .maxAnisotropy = 8.0f, // 8 is a widely supported value for max anisotropy
+        .maxLod = (float)ktxTexture->numLevels,
+    };
+    chk(vkCreateSampler(device, &samplerCI, nullptr, &textures[0].sampler));
+
+    ktxTexture2_Destroy(ktxTexture);
+
+    std::vector<VkDescriptorImageInfo> textureDescriptors{};
+    textureDescriptors.push_back({
+        .sampler = textures[0].sampler,
+        .imageView = textures[0].view,
+        .imageLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL
+    });
+
+
+    VkDescriptorBindingFlags descVariableFlag{ VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT };
+    VkDescriptorSetLayoutBindingFlagsCreateInfo descBindingFlags{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindingFlags = &descVariableFlag
+    };
+    VkDescriptorSetLayoutBinding descLayoutBindingTex{
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = static_cast<uint32_t>(textures.size()),
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+    };
+    VkDescriptorSetLayoutCreateInfo descLayoutTexCI{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = &descBindingFlags,
+        .bindingCount = 1,
+        .pBindings = &descLayoutBindingTex
+    };
+
+    VkDescriptorSetLayout descriptorSetLayoutTex{ VK_NULL_HANDLE };
+    chk(vkCreateDescriptorSetLayout(device, &descLayoutTexCI, nullptr, &descriptorSetLayoutTex));
+
+
+    VkDescriptorPoolSize poolSize{
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = static_cast<uint32_t>(textures.size())
+    };
+    VkDescriptorPoolCreateInfo descPoolCI{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = 1,
+        .poolSizeCount = 1,
+        .pPoolSizes = &poolSize
+    };
+
+    VkDescriptorPool descriptorPool{ VK_NULL_HANDLE };
+    chk(vkCreateDescriptorPool(device, &descPoolCI, nullptr, &descriptorPool));
+
+    uint32_t variableDescCount{ static_cast<uint32_t>(textures.size()) };
+    VkDescriptorSetVariableDescriptorCountAllocateInfo variableDescCountAI{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT,
+        .descriptorSetCount = 1,
+        .pDescriptorCounts = &variableDescCount
+    };
+    VkDescriptorSetAllocateInfo texDescSetAlloc{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = &variableDescCountAI,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayoutTex
+    };
+    VkDescriptorSet descriptorSetTex{ VK_NULL_HANDLE };
+    chk(vkAllocateDescriptorSets(device, &texDescSetAlloc, &descriptorSetTex));
+
+    VkWriteDescriptorSet writeDescSet{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSetTex,
+        .dstBinding = 0,
+        .descriptorCount = static_cast<uint32_t>(textureDescriptors.size()),
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = textureDescriptors.data()
+    };
+    vkUpdateDescriptorSets(device, 1, &writeDescSet, 0, nullptr);
+
+    Slang::ComPtr<slang::IGlobalSession> slangGlobalSession;
+    slang::createGlobalSession(slangGlobalSession.writeRef());
+
+    auto slangTargets{ std::to_array<slang::TargetDesc>({ {
+        .format{SLANG_SPIRV},
+        .profile{slangGlobalSession->findProfile("spirv_1_4")}
+    } })};
+    auto slangOptions{ std::to_array<slang::CompilerOptionEntry>({ {
+        slang::CompilerOptionName::EmitSpirvDirectly,
+        {slang::CompilerOptionValueKind::Int, 1}
+    } })};
+    slang::SessionDesc slangSessionDesc{
+        .targets{slangTargets.data()},
+        .targetCount{SlangInt(slangTargets.size())},
+        .defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
+        .compilerOptionEntries{slangOptions.data()},
+        .compilerOptionEntryCount{uint32_t(slangOptions.size())}
+    };
+    Slang::ComPtr<slang::ISession> slangSession;
+    slangGlobalSession->createSession(slangSessionDesc, slangSession.writeRef());
+
+    Slang::ComPtr<slang::IModule> slangModule{
+        slangSession->loadModuleFromSource("triangle", "./src/shader.slang", nullptr, nullptr)
+    };
+    Slang::ComPtr<ISlangBlob> spirv;
+    slangModule->getTargetCode(0, spirv.writeRef());
+
+    // The VK_KHR_maintenance5 extension, which became core with Vulkan 1.4, deprecated shader modules.
+    // It allows direct passing of VkShaderModuleCreateInfo to the pipeline's shader stage create info.
+    // https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_maintenance5.html
+    VkShaderModuleCreateInfo shaderModuleCI{
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = spirv->getBufferSize(),
+        .pCode = (uint32_t*)spirv->getBufferPointer()
+    };
+    VkShaderModule shaderModule{};
+    chk(vkCreateShaderModule(device, &shaderModuleCI, nullptr, &shaderModule));
+
+    VkPushConstantRange pushConstantRange{
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .size = sizeof(VkDeviceAddress)
+    };
+    VkPipelineLayoutCreateInfo pipelineLayoutCI{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptorSetLayoutTex,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &pushConstantRange
+    };
+
+    VkPipelineLayout pipelineLayout{ VK_NULL_HANDLE };
+    chk(vkCreatePipelineLayout(device, &pipelineLayoutCI, nullptr, &pipelineLayout));
+
+    VkVertexInputBindingDescription vertexBinding{
+        .binding = 0,
+        .stride = sizeof(Vertex),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    std::vector<VkVertexInputAttributeDescription> vertexAttributes{
+        { .location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT },
+        { .location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, color) },
+        // { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
+    };
+
+
+
+    // --------
 
     while (!glfwWindowShouldClose(window))
     {
