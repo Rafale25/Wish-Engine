@@ -55,7 +55,7 @@ ktxTexture2* loadTextureFromFile(const char* path) {
 
     // createInfo.glInternalformat = GL_RGB8;   // Ignored if creating a ktxTexture2.
     // createInfo.vkFormat = VK_FORMAT_R8G8B8_UNORM;   // Ignored if creating a ktxTexture1.
-    createInfo.vkFormat = VK_FORMAT_R8G8B8A8_UNORM;   // Ignored if creating a ktxTexture1.
+    createInfo.vkFormat = VK_FORMAT_R8G8B8A8_SRGB; // VK_FORMAT_R8G8B8A8_UNORM  // Ignored if creating a ktxTexture1.
     createInfo.baseWidth = width;
     createInfo.baseHeight = height;
     createInfo.baseDepth = 1;
@@ -320,16 +320,19 @@ int main(void)
     struct Vertex {
         glm::vec3 pos;
         glm::vec3 color;
+        glm::vec2 uv;
     };
 
-    const VkDeviceSize indexCount{3};
+    const VkDeviceSize indexCount{6};
     std::vector<Vertex> vertices{
-        {{-0.5, 0.5, 0}, {1, 0, 0}},
-        {{0.5, 0.5, 0}, {0, 1, 0}},
-        {{0.0, -0.5, 0}, {0, 0, 1}},
+        {{-1,  1, 0}, {1, 0, 0}, {0, 0}},
+        {{ 1,  1, 0}, {0, 1, 0}, {1, 0}},
+        {{-1, -1, 0}, {0, 0, 1}, {0, 1}},
+        {{ 1, -1, 0}, {0, 1, 1}, {1, 1}},
     };
     std::vector<uint16_t> indices{
         0, 2, 1,
+        2, 1, 3,
     };
 
     VkDeviceSize vBufSize{ sizeof(Vertex) * vertices.size() };
@@ -370,6 +373,7 @@ int main(void)
         glm::mat4 model[3];
         glm::vec4 lightPos{ 0.0f, -10.0f, 10.0f, 0.0f };
         uint32_t selected{1};
+        float time{0.0f};
     } shaderData{};
 
     for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
@@ -698,7 +702,7 @@ int main(void)
     std::vector<VkVertexInputAttributeDescription> vertexAttributes{
         { .location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT },
         { .location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, color) },
-        // { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
+        { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
     };
 
     VkPipelineVertexInputStateCreateInfo vertexInputState{
@@ -793,12 +797,12 @@ int main(void)
     uint32_t frameIndex{ 0 };
     uint32_t imageIndex{ 0 };
 
-    double time = glfwGetTime();
-
     while (!glfwWindowShouldClose(window))
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
+
+        double time = glfwGetTime();
 
         if (updateSwapchain) {
             updateSwapchain = false;
@@ -854,6 +858,7 @@ int main(void)
         for (uint32_t i = 0; i < 3; ++i) {
             shaderData.model[i] = glm::mat4(1.0f);
         }
+        shaderData.time = time;
         memcpy(shaderDataBuffers[frameIndex].allocationInfo.pMappedData, &shaderData, sizeof(ShaderData));
 
 
