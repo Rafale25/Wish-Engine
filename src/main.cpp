@@ -3,11 +3,12 @@
 
 // #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-// #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 // #include <glm/gtc/quaternion.hpp>
 
 #define VMA_IMPLEMENTATION
-#include <vma/vk_mem_alloc.h>
+// #include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 
 #include "stb_image.h"
 
@@ -19,9 +20,23 @@
 
 #include <iostream>
 #include <vector>
+#include <array>
+#include <print>
 
 static inline void chk(VkResult result) {
 	if (result != VK_SUCCESS) {
+		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+		exit(result);
+	}
+}
+
+bool updateSwapchain{ false };
+static inline void chkSwapchain(VkResult result) {
+	if (result < VK_SUCCESS) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			updateSwapchain = true;
+			return;
+		}
 		std::cerr << "Vulkan call returned an error (" << result << ")\n";
 		exit(result);
 	}
@@ -71,6 +86,15 @@ ktxTexture2* loadTextureFromFile(const char* path) {
     return texture;
 }
 
+int framebufferWidth, framebufferHeight;
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    updateSwapchain = true;
+
+    framebufferWidth = width;
+    framebufferHeight = height;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -87,6 +111,11 @@ int main(void)
     }
 
     // glfwMakeContextCurrent(window);
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+
 
     if (!glfwVulkanSupported())
     {
@@ -239,6 +268,11 @@ int main(void)
     chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
     swapchainImageViews.resize(imageCount);
 
+	for (auto i = 0; i < imageCount; ++i) {
+		VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
+		chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
+	}
+
     std::vector<VkFormat> depthFormatList{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
     VkFormat depthFormat{ VK_FORMAT_UNDEFINED };
     for (VkFormat& format : depthFormatList) {
@@ -249,9 +283,6 @@ int main(void)
             break;
         }
     }
-
-    int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
 
     VkImageCreateInfo depthImageCI{
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -293,12 +324,12 @@ int main(void)
 
     const VkDeviceSize indexCount{3};
     std::vector<Vertex> vertices{
-        {{0, 0, 0}, {1, 0, 0}},
-        {{1, 0, 0}, {0, 1, 0}},
-        {{0.5, 1, 0}, {0, 0, 1}},
+        {{-0.5, 0.5, 0}, {1, 0, 0}},
+        {{0.5, 0.5, 0}, {0, 1, 0}},
+        {{0.0, -0.5, 0}, {0, 0, 1}},
     };
     std::vector<uint16_t> indices{
-        0, 1, 2,
+        0, 2, 1,
     };
 
     VkDeviceSize vBufSize{ sizeof(Vertex) * vertices.size() };
@@ -670,20 +701,315 @@ int main(void)
         // { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
     };
 
+    VkPipelineVertexInputStateCreateInfo vertexInputState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &vertexBinding,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributes.size()),
+        .pVertexAttributeDescriptions = vertexAttributes.data(),
+    };
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+    };
+
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages{
+        { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = shaderModule, .pName = "main" },
+        { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = shaderModule, .pName = "main" }
+    };
+
+    // If you'd wanted to use different shaders (or shader combinations),
+    // you'd have to create multiple pipelines.
+    // The VK_EXT_shader_objects https://www.khronos.org/blog/you-can-use-vulkan-without-pipelines-today
+    // makes those shader stages into separate objects and adds more flexibility to this part of the API.
+    VkPipelineViewportStateCreateInfo viewportState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1
+    };
+    std::vector<VkDynamicState> dynamicStates{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    VkPipelineDynamicStateCreateInfo dynamicState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = 2,
+        .pDynamicStates = dynamicStates.data()
+    };
+
+    VkPipelineDepthStencilStateCreateInfo depthStencilState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+    };
+
+    VkPipelineRenderingCreateInfo renderingCI{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &imageFormat,
+        .depthAttachmentFormat = depthFormat
+    };
+
+    VkPipelineColorBlendAttachmentState blendAttachment{
+        .colorWriteMask = 0xF
+    };
+    VkPipelineColorBlendStateCreateInfo colorBlendState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .attachmentCount = 1,
+        .pAttachments = &blendAttachment
+    };
+    VkPipelineRasterizationStateCreateInfo rasterizationState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .lineWidth = 1.0f
+    };
+    VkPipelineMultisampleStateCreateInfo multisampleState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+    };
+
+    VkGraphicsPipelineCreateInfo pipelineCI{
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &renderingCI,
+        .stageCount = 2,
+        .pStages = shaderStages.data(),
+        .pVertexInputState = &vertexInputState,
+        .pInputAssemblyState = &inputAssemblyState,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizationState,
+        .pMultisampleState = &multisampleState,
+        .pDepthStencilState = &depthStencilState,
+        .pColorBlendState = &colorBlendState,
+        .pDynamicState = &dynamicState,
+        .layout = pipelineLayout
+    };
+    VkPipeline pipeline{ VK_NULL_HANDLE };
+    chk(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &pipeline));
 
 
     // --------
+
+    uint32_t frameIndex{ 0 };
+    uint32_t imageIndex{ 0 };
+
+    double time = glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        /* Render here */
+        if (updateSwapchain) {
+            updateSwapchain = false;
+            vkDeviceWaitIdle(device);
+            chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
+            swapchainCI.oldSwapchain = swapchain;
+            swapchainCI.imageExtent = { .width = static_cast<uint32_t>(framebufferWidth), .height = static_cast<uint32_t>(framebufferHeight) };
+            chk(vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain));
+            for (auto i = 0; i < imageCount; i++) {
+                vkDestroyImageView(device, swapchainImageViews[i], nullptr);
+            }
+            chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
+            swapchainImages.resize(imageCount);
+            chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
+            swapchainImageViews.resize(imageCount);
+            for (auto i = 0; i < imageCount; i++) {
+                VkImageViewCreateInfo viewCI{
+                    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                    .image = swapchainImages[i],
+                    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                    .format = imageFormat,
+                    .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}
+                };
+                chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
+            }
+            vkDestroySwapchainKHR(device, swapchainCI.oldSwapchain, nullptr);
+            vmaDestroyImage(allocator, depthImage, depthImageAllocation);
+            vkDestroyImageView(device, depthImageView, nullptr);
+
+            depthImageCI.extent = { .width = static_cast<uint32_t>(framebufferWidth), .height = static_cast<uint32_t>(framebufferHeight), .depth = 1 };
+            VmaAllocationCreateInfo allocCI{
+                .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+                .usage = VMA_MEMORY_USAGE_AUTO
+            };
+            chk(vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr));
+            VkImageViewCreateInfo viewCI{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = depthImage,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = depthFormat,
+                .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 }
+            };
+            chk(vkCreateImageView(device, &viewCI, nullptr, &depthImageView));
+        }
+
+        chk(vkWaitForFences(device, 1, &fences[frameIndex], true, UINT64_MAX));
+        chk(vkResetFences(device, 1, &fences[frameIndex]));
+
+        chkSwapchain(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
+
+        shaderData.projection = glm::perspective(glm::radians(60.0f), (float)framebufferWidth / (float)framebufferHeight, 0.1f, 100.0f);
+        shaderData.view = glm::mat4(1.0f);
+        for (uint32_t i = 0; i < 3; ++i) {
+            shaderData.model[i] = glm::mat4(1.0f);
+        }
+        memcpy(shaderDataBuffers[frameIndex].allocationInfo.pMappedData, &shaderData, sizeof(ShaderData));
+
+
+        auto cb = commandBuffers[frameIndex];
+        chk(vkResetCommandBuffer(cb, 0));
+
+        VkCommandBufferBeginInfo cbBI {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        };
+        chk(vkBeginCommandBuffer(cb, &cbBI));
+
+        std::array<VkImageMemoryBarrier2, 2> outputBarriers{
+            VkImageMemoryBarrier2{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .srcAccessMask = 0,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .image = swapchainImages[imageIndex],
+                .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
+            },
+            VkImageMemoryBarrier2{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+                .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+                .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .image = depthImage,
+                .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, .levelCount = 1, .layerCount = 1 }
+            }
+        };
+        VkDependencyInfo barrierDependencyInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 2,
+            .pImageMemoryBarriers = outputBarriers.data()
+        };
+        vkCmdPipelineBarrier2(cb, &barrierDependencyInfo);
+
+        VkRenderingAttachmentInfo colorAttachmentInfo{
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = swapchainImageViews[imageIndex],
+            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue{.color{ 0.0f, 0.0f, 0.0f, 1.0f }}
+        };
+        VkRenderingAttachmentInfo depthAttachmentInfo{
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = depthImageView,
+            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .clearValue = {.depthStencil = {1.0f,  0}}
+        };
+
+        VkRenderingInfo renderingInfo{
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea{.extent{.width = static_cast<uint32_t>(framebufferWidth), .height = static_cast<uint32_t>(framebufferHeight) }},
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachmentInfo,
+            .pDepthAttachment = &depthAttachmentInfo
+        };
+        vkCmdBeginRendering(cb, &renderingInfo);
+
+        VkViewport vp{
+            .width = static_cast<float>(framebufferWidth),
+            .height = static_cast<float>(framebufferHeight),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f
+        };
+        vkCmdSetViewport(cb, 0, 1, &vp);
+        VkRect2D scissor{ .extent{ .width = static_cast<uint32_t>(framebufferWidth), .height = static_cast<uint32_t>(framebufferHeight) } };
+        vkCmdSetScissor(cb, 0, 1, &scissor);
+
+        vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        VkDeviceSize vOffset{ 0 };
+        vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSetTex, 0, nullptr);
+        vkCmdBindVertexBuffers(cb, 0, 1, &vBuffer, &vOffset);
+        vkCmdBindIndexBuffer(cb, vBuffer, vBufSize, VK_INDEX_TYPE_UINT16);
+
+        vkCmdPushConstants(cb, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &shaderDataBuffers[frameIndex].deviceAddress);
+
+        vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
+
+        vkCmdEndRendering(cb);
+
+        VkImageMemoryBarrier2 barrierPresent{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = 0,
+            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,// VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .image = swapchainImages[imageIndex],
+            .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
+        };
+        VkDependencyInfo barrierPresentDependencyInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrierPresent
+        };
+        vkCmdPipelineBarrier2(cb, &barrierPresentDependencyInfo);
+
+        vkEndCommandBuffer(cb);
+
+        VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VkSubmitInfo submitInfo{
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &presentSemaphores[frameIndex],
+            .pWaitDstStageMask = &waitStages,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cb,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &renderSemaphores[imageIndex],
+        };
+        chk(vkQueueSubmit(queue, 1, &submitInfo, fences[frameIndex]));
+
+        frameIndex = (frameIndex + 1) % maxFramesInFlight;
+
+        VkPresentInfoKHR presentInfo{
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &renderSemaphores[imageIndex],
+            .swapchainCount = 1,
+            .pSwapchains = &swapchain,
+            .pImageIndices = &imageIndex
+        };
+        chkSwapchain(vkQueuePresentKHR(queue, &presentInfo));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    // Clean up
+
+    chk(vkDeviceWaitIdle(device));
+    for (auto i = 0; i < maxFramesInFlight; i++) {
+        vkDestroyFence(device, fences[i], nullptr);
+        vkDestroySemaphore(device, presentSemaphores[i], nullptr);
+        // ...
+    }
+    vmaDestroyImage(allocator, depthImage, depthImageAllocation);
+    // ...
+    vkDestroyCommandPool(device, commandPool, nullptr);
+    vmaDestroyAllocator(allocator);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
 
     glfwTerminate();
     return 0;

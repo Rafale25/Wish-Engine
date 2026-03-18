@@ -1,7 +1,7 @@
 struct VSInput {
     float3 Pos;
-    float3 Normal;
-    float2 UV;
+    float3 Color;
+    // float2 UV;
 };
 
 Sampler2D textures[];
@@ -16,33 +16,33 @@ struct ShaderData {
 
 struct VSOutput {
     float4 Pos : SV_POSITION;
-    float3 Normal;
-    float2 UV;
-    float3 Factor;
-    float3 LightVec;
-    float3 ViewVec;
-    uint32_t InstanceIndex;
+    float3 Color;
+    // uint32_t InstanceIndex;
 };
 
 [shader("vertex")]
 VSOutput main(VSInput input, uniform ShaderData *shaderData, uint instanceIndex : SV_VulkanInstanceID) {
     VSOutput output;
-    float4x4 modelMat = shaderData->model[instanceIndex];
-    output.Normal = mul((float3x3)mul(shaderData->view, modelMat), input.Normal);
-    output.UV = input.UV;
-    output.Pos = mul(shaderData->projection, mul(shaderData->view, mul(modelMat, float4(input.Pos.xyz, 1.0))));
-    output.Factor = (shaderData->selected == instanceIndex ? 3.0f : 1.0f);
-    output.InstanceIndex = instanceIndex;
+    // float4x4 modelMat = shaderData->model[instanceIndex];
+    // output.Normal = mul((float3x3)mul(shaderData->view, modelMat), input.Normal);
+    // output.UV = input.UV;
+    // output.Pos = mul(shaderData->projection, mul(shaderData->view, mul(modelMat, float4(input.Pos.xyz, 1.0))));
+    // output.Pos = mul(shaderData->projection, mul(shaderData->view, float4(input.Pos.xyz, 1.0)));
+    output.Pos = float4(input.Pos.xyz, 1.0);
+    output.Color = input.Color;
+
+    // output.Factor = (shaderData->selected == instanceIndex ? 3.0f : 1.0f);
+    // output.InstanceIndex = instanceIndex;
     // Calculate view vectors required for lighting
-    float4 fragPos = mul(mul(shaderData->view, modelMat), float4(input.Pos.xyz, 1.0));
-    output.LightVec = shaderData->lightPos.xyz - fragPos.xyz;
-    output.ViewVec = -fragPos.xyz;
+    // float4 fragPos = mul(mul(shaderData->view, modelMat), float4(input.Pos.xyz, 1.0));
+    // output.LightVec = shaderData->lightPos.xyz - fragPos.xyz;
+    // output.ViewVec = -fragPos.xyz;
     return output;
 }
 
 [shader("fragment")]
 float4 main(VSOutput input) {
-    return float4(1.0, 0.0, 0.0, 1.0);
+    return float4(input.Color, 1.0);
 
     /*
     // Phong lighting

@@ -35,6 +35,8 @@ add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
 
 # VMA #
 add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
+include_directories(${THIRD_PARTY_DIR}/include)
+
 # -- #
 
 # KTX
