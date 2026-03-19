@@ -184,7 +184,10 @@ int main(void)
         .pQueuePriorities = &qfpriorities
     };
 
-    const std::vector<const char*> deviceExtensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    const std::vector<const char*> deviceExtensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME
+    };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{
         .samplerAnisotropy = VK_TRUE
@@ -430,7 +433,7 @@ int main(void)
     chk(vkAllocateCommandBuffers(device, &cbAllocCI, commandBuffers.data()));
 
 
-    // TEXTURE LOADING
+    // MARK: TEXTURE LOADING
 
     ktxTexture2* ktxTexture = loadTextureFromFile("./Gigachad.jpg");
 
@@ -511,7 +514,7 @@ int main(void)
         .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
         .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .image = textures[0].image,
         .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = ktxTexture->numLevels, .layerCount = 1 }
     };
@@ -532,20 +535,24 @@ int main(void)
             .imageExtent{.width = ktxTexture->baseWidth >> j, .height = ktxTexture->baseHeight >> j, .depth = 1 },
         });
     }
-    vkCmdCopyBufferToImage(cbOneTime, imgSrcBuffer, textures[0].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+    vkCmdCopyBufferToImage(cbOneTime, imgSrcBuffer, textures[0].image, VK_IMAGE_LAYOUT_GENERAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+
+    // With VK_KHR_unified_image_layouts, don't need to track the layout transition,
+    // can just use VK_IMAGE_LAYOUT_GENERAL everywhere
     VkImageMemoryBarrier2 barrierTexRead{
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
         .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .image = textures[0].image,
         .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = ktxTexture->numLevels, .layerCount = 1 }
     };
     barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
     vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
+
     chk(vkEndCommandBuffer(cbOneTime));
     VkSubmitInfo oneTimeSI{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -555,7 +562,7 @@ int main(void)
     chk(vkQueueSubmit(queue, 1, &oneTimeSI, fenceOneTime));
     chk(vkWaitForFences(device, 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
 
-    // -----------------------------------
+    // MARK: ------------------------
 
     VkSamplerCreateInfo samplerCI{
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -574,7 +581,7 @@ int main(void)
     textureDescriptors.push_back({
         .sampler = textures[0].sampler,
         .imageView = textures[0].view,
-        .imageLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL
     });
 
 
@@ -792,7 +799,7 @@ int main(void)
     chk(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &pipeline));
 
 
-    // --------
+    // MARK: Render loop
 
     uint32_t frameIndex{ 0 };
     uint32_t imageIndex{ 0 };
@@ -879,7 +886,7 @@ int main(void)
                 .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
                 .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                 .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
                 .image = swapchainImages[imageIndex],
                 .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
             },
@@ -890,7 +897,7 @@ int main(void)
                 .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
                 .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
                 .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
                 .image = depthImage,
                 .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, .levelCount = 1, .layerCount = 1 }
             }
@@ -905,7 +912,7 @@ int main(void)
         VkRenderingAttachmentInfo colorAttachmentInfo{
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = swapchainImageViews[imageIndex],
-            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue{.color{ 0.0f, 0.0f, 0.0f, 1.0f }}
@@ -913,7 +920,7 @@ int main(void)
         VkRenderingAttachmentInfo depthAttachmentInfo{
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = depthImageView,
-            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .clearValue = {.depthStencil = {1.0f,  0}}
@@ -957,8 +964,8 @@ int main(void)
             .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstAccessMask = 0,
-            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,// VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,// VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // Can't use VK_IMAGE_LAYOUT_GENERAL here
             .image = swapchainImages[imageIndex],
             .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
         };
