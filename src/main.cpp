@@ -128,7 +128,7 @@ int main(void)
     VkApplicationInfo appInfo {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "Wish Engine",
-        .apiVersion = VK_API_VERSION_1_3
+        .apiVersion = VK_API_VERSION_1_4
     };
 
     uint32_t instanceExtensionsCount{ 0 };
@@ -186,7 +186,8 @@ int main(void)
 
     const std::vector<const char*> deviceExtensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME
+        VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME,
+        // VK_KHR_MAINTENANCE_5_EXTENSION_NAME
     };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{
@@ -200,16 +201,22 @@ int main(void)
         .runtimeDescriptorArray = true,
         .bufferDeviceAddress = true
     };
-    const VkPhysicalDeviceVulkan13Features enabledVk13Features{
+    VkPhysicalDeviceVulkan13Features enabledVk13Features{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
         .pNext = &enabledVk12Features,
         .synchronization2 = true,
         .dynamicRendering = true,
     };
+    const VkPhysicalDeviceVulkan14Features enabledVk14Features{
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pNext = &enabledVk13Features,
+        .maintenance5 = VK_TRUE,
+    };
+
 
     VkDeviceCreateInfo deviceCI{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &enabledVk13Features,
+        .pNext = &enabledVk14Features,
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &queueCI,
         .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
@@ -682,8 +689,6 @@ int main(void)
         .codeSize = spirv->getBufferSize(),
         .pCode = (uint32_t*)spirv->getBufferPointer()
     };
-    VkShaderModule shaderModule{};
-    chk(vkCreateShaderModule(device, &shaderModuleCI, nullptr, &shaderModule));
 
     VkPushConstantRange pushConstantRange{
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
@@ -725,12 +730,17 @@ int main(void)
     };
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages{
-        { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+    {   .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = &shaderModuleCI,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = shaderModule, .pName = "main" },
-        { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .module = VK_NULL_HANDLE,
+        .pName = "main"
+    },
+    {   .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = &shaderModuleCI,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = shaderModule, .pName = "main" }
+        .module = VK_NULL_HANDLE,
+        .pName = "main" }
     };
 
     // If you'd wanted to use different shaders (or shader combinations),
