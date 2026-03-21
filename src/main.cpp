@@ -253,6 +253,14 @@ int main(void)
     VkSurfaceCapabilitiesKHR surfaceCaps{};
     chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
 
+    VkExtent2D swapchainExtent{ surfaceCaps.currentExtent };
+    if (surfaceCaps.currentExtent.width == 0xFFFFFFFF) {
+		swapchainExtent = {
+            .width = static_cast<uint32_t>(framebufferWidth),
+            .height = static_cast<uint32_t>(framebufferHeight)
+        };
+	}
+
     const VkFormat imageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
     VkSwapchainKHR swapchain{ VK_NULL_HANDLE };
     VkSwapchainCreateInfoKHR swapchainCI{
@@ -261,7 +269,7 @@ int main(void)
         .minImageCount = surfaceCaps.minImageCount,
         .imageFormat = imageFormat,
         .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
-        .imageExtent{ .width = surfaceCaps.currentExtent.width, .height = surfaceCaps.currentExtent.height },
+        .imageExtent{ .width = swapchainExtent.width, .height = swapchainExtent.height },
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
