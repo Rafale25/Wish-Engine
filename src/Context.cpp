@@ -118,10 +118,9 @@ void Context::initWindow() {
 // }
 
 void Context::updateSwapchain() {
-    int deviceIndex = 0; // TEMPPPPPPP
     m_updateSwapchain = false;
     vkDeviceWaitIdle(m_device);
-    chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_devices[deviceIndex], m_surface, &m_surfaceCaps));
+    chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_devices[m_deviceIndex], m_surface, &m_surfaceCaps));
     m_swapchainCI.oldSwapchain = m_swapchain;
     m_swapchainCI.imageExtent = { .width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight) };
     chk(vkCreateSwapchainKHR(m_device, &m_swapchainCI, nullptr, &m_swapchain));
@@ -454,9 +453,151 @@ void Context::init() {
 }
 
 void Context::beginRendering() {
+    if (m_updateSwapchain) {
+        updateSwapchain();
+    }
+    chk(vkWaitForFences(m_device, 1, &m_fences[m_frameIndex], true, UINT64_MAX));
+    chk(vkResetFences(m_device, 1, &m_fences[m_frameIndex]));
+    chkSwapchain(vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, m_presentSemaphores[m_frameIndex], VK_NULL_HANDLE, &m_imageIndex));
 
+    m_currentCommandBuffer = m_commandBuffers[m_frameIndex];
+    chk(vkResetCommandBuffer(m_currentCommandBuffer, 0));
+
+    VkCommandBufferBeginInfo cbBI {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+    chk(vkBeginCommandBuffer(m_currentCommandBuffer, &cbBI));
+
+
+
+    // Not sure if should be here
+    std::array<VkImageMemoryBarrier2, 2> outputBarriers{
+        VkImageMemoryBarrier2{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = 0,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .image = m_swapchainImages[m_imageIndex],
+            .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
+        },
+        VkImageMemoryBarrier2{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+            .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .image = m_depthImage,
+            .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, .levelCount = 1, .layerCount = 1 }
+        }
+    };
+    VkDependencyInfo barrierDependencyInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 2,
+        .pImageMemoryBarriers = outputBarriers.data()
+    };
+    vkCmdPipelineBarrier2(m_currentCommandBuffer, &barrierDependencyInfo);
+
+    VkRenderingAttachmentInfo colorAttachmentInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = m_swapchainImageViews[m_imageIndex],
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue{.color{ 0.0f, 0.0f, 0.0f, 1.0f }}
+    };
+    VkRenderingAttachmentInfo depthAttachmentInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = m_depthImageView,
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .clearValue = {.depthStencil = {1.0f,  0}}
+    };
+
+    VkRenderingInfo renderingInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea{.extent{.width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight) }},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentInfo,
+        .pDepthAttachment = &depthAttachmentInfo
+    };
+    vkCmdBeginRendering(m_currentCommandBuffer, &renderingInfo);
+
+    VkViewport vp{
+        .width = static_cast<float>(m_framebufferWidth),
+        .height = static_cast<float>(m_framebufferHeight),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+    vkCmdSetViewport(m_currentCommandBuffer, 0, 1, &vp);
+    VkRect2D scissor{ .extent{ .width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight) } };
+    vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
+
+    // vkCmdBindPipeline(m_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    // VkDeviceSize vOffset{ 0 };
+    // vkCmdBindDescriptorSets(m_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSetTex, 0, nullptr);
+    // vkCmdBindVertexBuffers(m_currentCommandBuffer, 0, 1, &vBuffer, &vOffset);
+    // vkCmdBindIndexBuffer(m_currentCommandBuffer, vBuffer, vBufSize, VK_INDEX_TYPE_UINT16);
+
+    // vkCmdPushConstants(m_currentCommandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &shaderDataBuffers[frameIndex].deviceAddress);
 }
 
 void Context::endRendering() {
 
+    vkCmdEndRendering(m_currentCommandBuffer);
+
+    VkImageMemoryBarrier2 barrierPresent{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = 0,
+        .oldLayout = VK_IMAGE_LAYOUT_GENERAL,// VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // Can't use VK_IMAGE_LAYOUT_GENERAL here
+        .image = m_swapchainImages[m_imageIndex],
+        .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
+    };
+    VkDependencyInfo barrierPresentDependencyInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrierPresent
+    };
+    vkCmdPipelineBarrier2(m_currentCommandBuffer, &barrierPresentDependencyInfo);
+
+    vkEndCommandBuffer(m_currentCommandBuffer);
+
+    VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSubmitInfo submitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_presentSemaphores[m_frameIndex],
+        .pWaitDstStageMask = &waitStages,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_currentCommandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &m_renderSemaphores[m_imageIndex],
+    };
+    chk(vkQueueSubmit(m_queue, 1, &submitInfo, m_fences[m_frameIndex]));
+
+    m_frameIndex = (m_frameIndex + 1) % maxFramesInFlight;
+
+    VkPresentInfoKHR presentInfo{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_renderSemaphores[m_imageIndex],
+        .swapchainCount = 1,
+        .pSwapchains = &m_swapchain,
+        .pImageIndices = &m_imageIndex
+    };
+    chkSwapchain(vkQueuePresentKHR(m_queue, &presentInfo));
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 }

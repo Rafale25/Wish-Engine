@@ -85,9 +85,10 @@ private:
     Slang::ComPtr<slang::IGlobalSession> m_slangGlobalSession;
     Slang::ComPtr<slang::ISession> m_slangSession;
 
-
+    // Render loop
     uint32_t m_frameIndex{ 0 };
     uint32_t m_imageIndex{ 0 };
+    VkCommandBuffer_T* m_currentCommandBuffer{ nullptr };
 
 
     // TODO: move everything belowout of Context
