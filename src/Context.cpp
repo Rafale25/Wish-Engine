@@ -85,13 +85,13 @@ void Context::makeModelStuff() {
 
 void Context::initWindow() {
     if (!glfwInit())
-        return -1;
+        return;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     window = glfwCreateWindow(640, 480, applicationName.c_str(), NULL, NULL);
     if (!window) {
         glfwTerminate();
-        return -1;
+        return;
     }
 
     // glfwMakeContextCurrent(window);
