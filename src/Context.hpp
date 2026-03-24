@@ -1,9 +1,10 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#pragma once
+
 #include <vma/vk_mem_alloc.h>
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 #include <glm/glm.hpp>
+#include "View.hpp"
 #include <array>
 #include <vector>
 #include <string>
@@ -21,37 +22,43 @@ struct ShaderDataBuffer {
     VkDeviceAddress deviceAddress{};
 };
 
+struct GLFWwindow;
+
 class Context {
 public:
     Context() = default;
     ~Context() = default;
 
     void init();
+    void run();
+
+    void setView(View& view);
 
 private:
     void initWindow();
     void updateSwapchain();
-
     void chkSwapchain(VkResult result);
 
     void beginRendering();
     void endRendering();
 
-    // static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    // static void cursor_position_callback(GLFWwindow* window, double x, double y);
-    // static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-    // static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-    // static void cursor_enter_callback(GLFWwindow* window, int entered);
+    // static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    // static void cursorPositionCallback(GLFWwindow* window, double x, double y);
+    // static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    // static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+    // static void cursorEnterCallback(GLFWwindow* window, int entered);
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 public:
     // GLFW
     GLFWwindow* window = nullptr;
-    // int32_t width = 0, height = 0;
     int m_framebufferWidth = 0;
     int m_framebufferHeight = 0;
+    // int32_t width = 0, height = 0;
 
 private:
+    DefaultView m_defaultView{*this};
+    View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
 
     // Vulkan

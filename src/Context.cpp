@@ -1,4 +1,6 @@
 #include "Context.hpp"
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -30,7 +32,6 @@ void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 }
 
 /*
-
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
@@ -79,6 +80,42 @@ void Context::makeModelStuff() {
     memcpy(((char*)vBufferAllocInfo.pMappedData) + vBufSize, indices.data(), iBufSize);
 }
 */
+
+void Context::setView(View& view) {
+    m_currentView->onExitView();
+    m_currentView = &view;
+    view.onEnterView();
+
+    // call resize callback on first frame
+    glfwGetWindowSize(window, &m_framebufferWidth, &m_framebufferHeight);
+    framebufferSizeCallback(window, m_framebufferWidth, m_framebufferHeight);
+}
+
+
+void Context::run()
+{
+    double startTime = glfwGetTime();
+    double lastFrameTime = startTime;
+
+    while (!glfwWindowShouldClose(window))
+    {
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        double time = glfwGetTime();
+        double timeSinceStart = time - startTime;
+        double deltaTime = time - lastFrameTime;
+        lastFrameTime = time;
+
+        m_currentView->onUpdate(timeSinceStart, deltaTime);
+        m_currentView->onDraw(timeSinceStart, deltaTime);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    m_currentView->onExitView();
+}
 
 void Context::initWindow() {
     if (!glfwInit())
