@@ -1,8 +1,6 @@
 #include "Context.hpp"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
 #include <iostream>
 #include <print>
 
@@ -31,14 +29,13 @@ void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height)
     ctx->m_framebufferHeight = height;
 }
 
+/*
 
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 uv;
 };
-
-/*
 
 void Context::makeModelStuff() {
 

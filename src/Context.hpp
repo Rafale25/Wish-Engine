@@ -1,6 +1,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <vk_mem_alloc.h>
+#include <vma/vk_mem_alloc.h>
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 #include <glm/glm.hpp>
