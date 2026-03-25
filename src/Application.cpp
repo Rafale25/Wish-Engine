@@ -10,6 +10,7 @@ struct Vertex {
 };
 
 App::App(Context& ctx): View(ctx) {
+
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")
         .addVertexBinding(0, sizeof(Vertex))
@@ -17,24 +18,18 @@ App::App(Context& ctx): View(ctx) {
         .addVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
         .addVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv))
         .setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        // .add_dynamic(VK_DYNAMIC_STATE_VIEWPORT)
-        // .add_dynamic(VK_DYNAMIC_STATE_SCISSOR)
-        .build(ctx);
+        .setPolygonMode(VK_POLYGON_MODE_FILL)
+        .addDynamic(VK_DYNAMIC_STATE_VIEWPORT)
+        .addDynamic(VK_DYNAMIC_STATE_SCISSOR)
+        // .addDynamic(VK_DYNAMIC_STATE_LINE_WIDTH)
+        .build();
 
 /*
     VkPipeline templatePipeline = GraphicsPipelineBuilder{}
-        .set_shaders(vert_module, frag_module)
-        .add_vertex_binding(0, sizeof(Vertex))
-        .add_vertex_attribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))
-        .add_vertex_attribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal))
-        .add_vertex_attribute(2, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv))
-        .set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .set_rasterization(VK_CULL_MODE_BACK_BIT)
         .set_depth_stencil(VK_TRUE, VK_TRUE)
         .set_rendering_info(VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_D32_SFLOAT)
         .add_opaque_attachment()
-        .add_dynamic(VK_DYNAMIC_STATE_VIEWPORT)
-        .add_dynamic(VK_DYNAMIC_STATE_SCISSOR)
         .build(device, pipeline_layout);
 */
 
@@ -46,7 +41,7 @@ App::App(Context& ctx): View(ctx) {
         {{ 1, -1, 0}, {0, 1, 1}, {1, 1}},
     };
     std::vector<uint16_t> indices{
-        0, 2, 1,
+        0, 1, 2,
         2, 1, 3,
     };
 
@@ -73,6 +68,8 @@ void App::onDraw(double time_since_start, float dt) {
     VkDeviceSize vOffset{ 0 };
     vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.get(), &vOffset);
     vkCmdBindIndexBuffer(cb, m_bufferIndices.get(), 0, VK_INDEX_TYPE_UINT16);
+
+    // vkCmdSetLineWidth(cb, 10.0f);
 
     vkCmdPushConstants(cb, m_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &ctx.m_shaderDataBuffers[ctx.m_frameIndex].deviceAddress);
 

@@ -18,29 +18,27 @@ public:
     GraphicsPipelineBuilder& addVertexBinding(uint32_t binding, uint32_t stride);
     GraphicsPipelineBuilder& addVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
     GraphicsPipelineBuilder& setTopology(VkPrimitiveTopology topology);
-    // GraphicsPipelineBuilder& setRasterization();
-    // GraphicsPipelineBuilder& setDepthStencil();
-    // GraphicsPipelineBuilder& setRenderingInfo();
-    // GraphicsPipelineBuilder& setAddOpaqueAttachment();
-    // GraphicsPipelineBuilder& addDynamic();
-    [[nodiscard]] Pipeline build(const Context& ctx);
+    GraphicsPipelineBuilder& setPolygonMode(VkPolygonMode polygonMode);
+    GraphicsPipelineBuilder& setCullMode(VkCullModeFlags flags);
+    GraphicsPipelineBuilder& setFrontFace(VkFrontFace orientation);
+    GraphicsPipelineBuilder& setDepthCompareOp(VkCompareOp op);
+    GraphicsPipelineBuilder& addDynamic(VkDynamicState dynamicState);
+    [[nodiscard]] Pipeline build();
 
-    // set_shaders(vert_module, frag_module)
-    // add_vertex_binding(0, sizeof(Vertex))
-    // add_vertex_attribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))
-    // set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-    // set_rasterization(VK_CULL_MODE_BACK_BIT)
-    // set_depth_stencil(VK_TRUE, VK_TRUE)
+    // GraphicsPipelineBuilder& setRenderingInfo();
     // set_rendering_info(VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_D32_SFLOAT)
-    // add_opaque_attachment()
-    // add_dynamic(VK_DYNAMIC_STATE_VIEWPORT)
-    // build(device, pipeline_layout);
 
 private:
     std::string m_moduleName;
     std::string m_shaderPath;
 
     VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    VkPolygonMode m_polygonMode = VK_POLYGON_MODE_FILL;
+    VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
+    VkFrontFace m_frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    VkCompareOp m_compareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+
+    std::vector<VkDynamicState> m_dynamicStates;
 
     // TODO: make so we can have multiple
     VkVertexInputBindingDescription m_vertexInputBinding{};

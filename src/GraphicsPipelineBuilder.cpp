@@ -33,13 +33,38 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::setTopology(VkPrimitiveTopolog
     return *this;
 }
 
-// GraphicsPipelineBuilder& setRasterization();
-// GraphicsPipelineBuilder& setDepthStencil();
-// GraphicsPipelineBuilder& setRenderingInfo();
-// GraphicsPipelineBuilder& setAddOpaqueAttachment();
-// GraphicsPipelineBuilder& addDynamic();
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setPolygonMode(VkPolygonMode polygonMode) {
+    m_polygonMode = polygonMode;
+    return *this;
+}
 
-Pipeline GraphicsPipelineBuilder::build(const Context& ctx) {
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setCullMode(VkCullModeFlags flags) {
+    m_cullMode = flags;
+    return *this;
+}
+
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setFrontFace(VkFrontFace orientation) {
+    m_frontFace = orientation;
+    return *this;
+}
+
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setDepthCompareOp(VkCompareOp op) {
+    m_compareOp = op;
+    return *this;
+}
+
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::addDynamic(VkDynamicState dynamicState) {
+   auto it = std::find(m_dynamicStates.begin(), m_dynamicStates.end(), dynamicState);
+    if (it == m_dynamicStates.end()) {
+        m_dynamicStates.push_back(dynamicState);
+    } else {
+        // LogErr("dynamicState {dynamicState} already added")
+    }
+    return *this;
+}
+
+Pipeline GraphicsPipelineBuilder::build() {
+    const Context& ctx = Context::instance();
 
     Slang::ComPtr<slang::IModule> slangModule{
         ctx.m_slangSession->loadModuleFromSource(m_moduleName.c_str(), m_shaderPath.c_str(), nullptr, nullptr)
@@ -106,18 +131,18 @@ Pipeline GraphicsPipelineBuilder::build(const Context& ctx) {
         .viewportCount = 1,
         .scissorCount = 1
     };
-    std::vector<VkDynamicState> dynamicStates{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    // std::vector<VkDynamicState> dynamicStates{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
     VkPipelineDynamicStateCreateInfo dynamicState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = 2,
-        .pDynamicStates = dynamicStates.data()
+        .dynamicStateCount = static_cast<uint32_t>(m_dynamicStates.size()),
+        .pDynamicStates = m_dynamicStates.data()
     };
 
     VkPipelineDepthStencilStateCreateInfo depthStencilState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .depthCompareOp = m_compareOp
     };
 
     // TODO: make image format depends on custom input from setAddOpaqueAttachment
@@ -139,7 +164,10 @@ Pipeline GraphicsPipelineBuilder::build(const Context& ctx) {
     };
     VkPipelineRasterizationStateCreateInfo rasterizationState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .lineWidth = 1.0f
+        .polygonMode = m_polygonMode,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = m_frontFace,
+        .lineWidth = 1.0f,
     };
     VkPipelineMultisampleStateCreateInfo multisampleState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
