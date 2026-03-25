@@ -782,7 +782,7 @@ int main(void)
     };
 
     VkPipelineColorBlendAttachmentState blendAttachment{
-        .colorWriteMask = 0xF
+        .colorWriteMask = 0xF // RGBA bits
     };
     VkPipelineColorBlendStateCreateInfo colorBlendState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,

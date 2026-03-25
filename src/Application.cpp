@@ -62,18 +62,31 @@ void App::onDraw(double time_since_start, float dt) {
     VkCommandBuffer cb = Context::instance().getCommandBuffer();
     Context& ctx = Context::instance();
 
+    VkViewport vp{
+        .width = static_cast<float>(ctx.m_framebufferWidth),
+        .height = static_cast<float>(ctx.m_framebufferHeight),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+    VkRect2D scissor{ .extent{
+        .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
+        .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
+    };
+    vkCmdSetViewport(cb, 0, 1, &vp);
+    vkCmdSetScissor(cb, 0, 1, &scissor);
+
+
     vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
+        VkDeviceSize vOffset{ 0 };
+        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.get(), &vOffset);
+        vkCmdBindIndexBuffer(cb, m_bufferIndices.get(), 0, VK_INDEX_TYPE_UINT16);
 
-    VkDeviceSize vOffset{ 0 };
-    vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.get(), &vOffset);
-    vkCmdBindIndexBuffer(cb, m_bufferIndices.get(), 0, VK_INDEX_TYPE_UINT16);
+        // vkCmdSetLineWidth(cb, 10.0f);
 
-    // vkCmdSetLineWidth(cb, 10.0f);
+        vkCmdPushConstants(cb, m_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &ctx.m_shaderDataBuffers[ctx.m_frameIndex].deviceAddress);
 
-    vkCmdPushConstants(cb, m_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &ctx.m_shaderDataBuffers[ctx.m_frameIndex].deviceAddress);
-
-    const VkDeviceSize indexCount{6};
-    vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
+        const VkDeviceSize indexCount{6};
+        vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
 }
 
 void App::onResize(int width, int height) {

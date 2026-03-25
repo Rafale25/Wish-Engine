@@ -565,24 +565,6 @@ void Context::beginRendering() {
         .pDepthAttachment = &depthAttachmentInfo
     };
     vkCmdBeginRendering(m_currentCommandBuffer, &renderingInfo);
-
-    VkViewport vp{
-        .width = static_cast<float>(m_framebufferWidth),
-        .height = static_cast<float>(m_framebufferHeight),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-    vkCmdSetViewport(m_currentCommandBuffer, 0, 1, &vp);
-    VkRect2D scissor{ .extent{ .width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight) } };
-    vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
-
-    // vkCmdBindPipeline(m_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    // VkDeviceSize vOffset{ 0 };
-    // vkCmdBindDescriptorSets(m_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSetTex, 0, nullptr);
-    // vkCmdBindVertexBuffers(m_currentCommandBuffer, 0, 1, &vBuffer, &vOffset);
-    // vkCmdBindIndexBuffer(m_currentCommandBuffer, vBuffer, vBufSize, VK_INDEX_TYPE_UINT16);
-
-    // vkCmdPushConstants(m_currentCommandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &shaderDataBuffers[frameIndex].deviceAddress);
 }
 
 void Context::endRendering() {
