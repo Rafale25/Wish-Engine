@@ -228,7 +228,7 @@ void Context::init() {
     m_devices.resize(m_deviceCount);
     chk(vkEnumeratePhysicalDevices(m_instance, &m_deviceCount, m_devices.data()));
 
-    std::print("deviceCount : {}", m_deviceCount);
+    std::println("deviceCount : {}", m_deviceCount);
 
 
     // MARK: Choose device
