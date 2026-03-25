@@ -38,7 +38,7 @@ add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
 # -- #
 
 # KTX
-add_subdirectory(${THIRD_PARTY_DIR}/KTX/lib ${CMAKE_CURRENT_BINARY_DIR}/KTX)
+# add_subdirectory(${THIRD_PARTY_DIR}/KTX/lib ${CMAKE_CURRENT_BINARY_DIR}/KTX)
 # -- #
 
 # Slang #
@@ -51,25 +51,17 @@ include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-        C:/VulkanSDK/1.4.341.1/Include
         ./include
-        # ./src/game/
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
-    ktx
+    # ktx
     GPUOpen::VulkanMemoryAllocator
     $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
     ${Slang_LIBRARY}
 )
-
-# target_link_libraries(${PROJECT_NAME} PUBLIC $ENV{VULKAN_SDK}/Lib)
-
-# target_compile_definitions(myEngine PUBLIC
-#     RESSOURCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/"
-# )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     GLFW_INCLUDE_NONE

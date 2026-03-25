@@ -16,7 +16,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true
             },
             "environment": {
-                "BASE_CMAKE_CXX_FLAGS": "-W -Wall -Wextra -Wpedantic -Wno-unused-variable -Wno-unused-parameter -Wno-strict-aliasing -fdiagnostics-color -Wmissing-designated-field-initializers"
+                "BASE_CMAKE_CXX_FLAGS": "-W -Wall -Wextra -Wpedantic -Wno-unused-variable -Wno-unused-parameter -Wno-strict-aliasing -fdiagnostics-color -Wno-missing-field-initializers -Wreturn-type -Werror=return-type"
             }
         },
         {

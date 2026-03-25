@@ -1,5 +1,4 @@
 #include "Context.hpp"
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,6 +25,8 @@ inline void Context::chkSwapchain(VkResult result) {
 
 void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
+
+    ctx->m_updateSwapchain = true;
 
     ctx->m_framebufferWidth = width;
     ctx->m_framebufferHeight = height;
@@ -91,9 +92,7 @@ void Context::setView(View& view) {
     framebufferSizeCallback(window, m_framebufferWidth, m_framebufferHeight);
 }
 
-
-void Context::run()
-{
+void Context::run() {
     double startTime = glfwGetTime();
     double lastFrameTime = startTime;
 
@@ -108,7 +107,10 @@ void Context::run()
         lastFrameTime = time;
 
         m_currentView->onUpdate(timeSinceStart, deltaTime);
+
+        beginRendering();
         m_currentView->onDraw(timeSinceStart, deltaTime);
+        endRendering();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -631,7 +633,4 @@ void Context::endRendering() {
         .pImageIndices = &m_imageIndex
     };
     chkSwapchain(vkQueuePresentKHR(m_queue, &presentInfo));
-
-    glfwSwapBuffers(window);
-    glfwPollEvents();
 }

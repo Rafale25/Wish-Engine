@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
@@ -25,12 +26,31 @@ struct ShaderDataBuffer {
 struct GLFWwindow;
 
 class Context {
-public:
+private:
     Context() = default;
-    ~Context() = default;
+    ~Context() = default; // TODO: cleanup stuff in destructor
+
+    Context(const Context&) = delete;
+    Context(Context&&)      = delete;
+    Context& operator=(const Context&) = delete;
+    Context& operator=(Context&&)      = delete;
+
+public:
+    static Context& instance() {
+        static Context ctx{};
+        return ctx;
+    }
 
     void init();
     void run();
+
+    const VmaAllocator& getVmaAllocator() const {
+        return m_allocator;
+    }
+
+    VkCommandBuffer getCommandBuffer() const {
+        return m_commandBuffers[m_frameIndex];
+    };
 
     void setView(View& view);
 
@@ -56,7 +76,7 @@ public:
     int m_framebufferHeight = 0;
     // int32_t width = 0, height = 0;
 
-private:
+// private:
     DefaultView m_defaultView{*this};
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";

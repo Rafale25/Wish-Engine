@@ -284,7 +284,7 @@ int main(void)
     chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
     swapchainImageViews.resize(imageCount);
 
-	for (auto i = 0; i < imageCount; ++i) {
+	for (uint32_t  i = 0; i < imageCount; ++i) {
 		VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
 		chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
 	}

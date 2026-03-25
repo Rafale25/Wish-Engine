@@ -2,10 +2,10 @@
 #include "Application.hpp"
 
 int main() {
-    Context ctx;
-    App appView(ctx);
-
+    Context& ctx = Context::instance();
     ctx.init();
+
+    App appView(ctx);
 
     // ctx.setVsync(VSYNC);
     ctx.setView(appView);

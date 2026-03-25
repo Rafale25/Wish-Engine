@@ -8,7 +8,7 @@ struct VSInput {
     float2 UV;
 };
 
-Sampler2D textures[];
+// Sampler2D textures[];
 
 struct ShaderData {
     float4x4 projection;
@@ -39,12 +39,10 @@ VSOutput main(VSInput input, uniform ShaderData *u, uint instanceIndex : SV_Vulk
 
 [shader("fragment")]
 float4 main(VSOutput input, uniform ShaderData *u) {
-    float2 uv = fract(input.UV * 4);
-    uv.x += u.time;
+    // float2 uv = fract(input.UV * 4);
+    // uv.x += u.time;
+    // uv.y -= abs(sin(u.time * 3));
+    // float3 color = textures[0].Sample(uv).rgb;
 
-    uv.y -= abs(sin(u.time * 3));
-
-    float3 color = textures[0].Sample(uv).rgb;
-
-    return float4(color, 1.0);
+    return float4(input.Color, 1.0);
 }
