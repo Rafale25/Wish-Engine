@@ -21,7 +21,6 @@ App::App(Context& ctx): View(ctx) {
         .setPolygonMode(VK_POLYGON_MODE_FILL)
         .addDynamic(VK_DYNAMIC_STATE_VIEWPORT)
         .addDynamic(VK_DYNAMIC_STATE_SCISSOR)
-        // .addDynamic(VK_DYNAMIC_STATE_LINE_WIDTH)
         .build();
 
 /*

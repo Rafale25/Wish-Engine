@@ -53,6 +53,11 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::setDepthCompareOp(VkCompareOp 
     return *this;
 }
 
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setColorWriteMask(VkColorComponentFlags flags) {
+    m_colorWriteMask = flags;
+    return *this;
+}
+
 GraphicsPipelineBuilder& GraphicsPipelineBuilder::addDynamic(VkDynamicState dynamicState) {
    auto it = std::find(m_dynamicStates.begin(), m_dynamicStates.end(), dynamicState);
     if (it == m_dynamicStates.end()) {
@@ -155,7 +160,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     };
 
     VkPipelineColorBlendAttachmentState blendAttachment{
-        .colorWriteMask = 0xF
+        .colorWriteMask = m_colorWriteMask
     };
     VkPipelineColorBlendStateCreateInfo colorBlendState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,

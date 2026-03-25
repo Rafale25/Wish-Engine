@@ -22,7 +22,9 @@ public:
     GraphicsPipelineBuilder& setCullMode(VkCullModeFlags flags);
     GraphicsPipelineBuilder& setFrontFace(VkFrontFace orientation);
     GraphicsPipelineBuilder& setDepthCompareOp(VkCompareOp op);
+    GraphicsPipelineBuilder& setColorWriteMask(VkColorComponentFlags flags);
     GraphicsPipelineBuilder& addDynamic(VkDynamicState dynamicState);
+
     [[nodiscard]] Pipeline build();
 
     // GraphicsPipelineBuilder& setRenderingInfo();
@@ -37,6 +39,7 @@ private:
     VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
     VkFrontFace m_frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     VkCompareOp m_compareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    VkColorComponentFlags m_colorWriteMask = 0xF;
 
     std::vector<VkDynamicState> m_dynamicStates;
 
