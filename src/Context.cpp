@@ -167,7 +167,7 @@ void Context::updateSwapchain() {
     m_swapchainImages.resize(m_swapchainImageCount);
     chk(vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_swapchainImageCount, m_swapchainImages.data()));
     m_swapchainImageViews.resize(m_swapchainImageCount);
-    for (auto i = 0; i < m_swapchainImageCount; i++) {
+    for (uint32_t i = 0; i < m_swapchainImageCount; i++) {
         VkImageViewCreateInfo viewCI{
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = m_swapchainImages[i],
@@ -470,19 +470,19 @@ void Context::init() {
     slang::createGlobalSession(m_slangGlobalSession.writeRef());
 
     auto slangTargets{ std::to_array<slang::TargetDesc>({ {
-        .format{SLANG_SPIRV},
-        .profile{m_slangGlobalSession->findProfile("spirv_1_4")}
+        .format = SLANG_SPIRV,
+        .profile = m_slangGlobalSession->findProfile("spirv_1_4")
     } })};
     auto slangOptions{ std::to_array<slang::CompilerOptionEntry>({ {
         slang::CompilerOptionName::EmitSpirvDirectly,
         {slang::CompilerOptionValueKind::Int, 1}
     } })};
     slang::SessionDesc slangSessionDesc{
-        .targets{slangTargets.data()},
-        .targetCount{SlangInt(slangTargets.size())},
+        .targets = slangTargets.data(),
+        .targetCount = SlangInt(slangTargets.size()),
         .defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
-        .compilerOptionEntries{slangOptions.data()},
-        .compilerOptionEntryCount{uint32_t(slangOptions.size())}
+        .compilerOptionEntries = slangOptions.data(),
+        .compilerOptionEntryCount = uint32_t(slangOptions.size())
     };
     m_slangGlobalSession->createSession(slangSessionDesc, m_slangSession.writeRef());
 
@@ -545,7 +545,7 @@ void Context::beginRendering() {
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue{.color{ 0.0f, 0.0f, 0.0f, 1.0f }}
+        .clearValue{.color{ {0.0f, 0.0f, 0.0f, 1.0f} }}
     };
     VkRenderingAttachmentInfo depthAttachmentInfo{
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
