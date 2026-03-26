@@ -72,8 +72,8 @@ void App::onDraw(double time_since_start, float dt) {
 
     vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
         VkDeviceSize vOffset{ 0 };
-        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.get(), &vOffset);
-        vkCmdBindIndexBuffer(cb, m_bufferIndices.get(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &vOffset);
+        vkCmdBindIndexBuffer(cb, m_bufferIndices.buffer, 0, VK_INDEX_TYPE_UINT16);
 
         // vkCmdSetLineWidth(cb, 10.0f);
 

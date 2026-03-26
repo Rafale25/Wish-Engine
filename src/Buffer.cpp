@@ -1,6 +1,9 @@
 #include "Buffer.hpp"
+#include "Context.hpp"
 
 void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
+    const auto& ctx = Context::instance();
+
     VkBufferCreateInfo bufferCI{
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
@@ -13,38 +16,34 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
     };
     VmaAllocationInfo vBufferAllocInfo{};
     vmaCreateBuffer(
-        Context::instance().getVmaAllocator(),
+        ctx.getVmaAllocator(),
         &bufferCI, &bufferAllocCI,
-        &m_buffer,
-        &m_allocation,
-        &m_allocationInfo);
+        &buffer,
+        &allocation,
+        &allocationInfo);
 
     VkBufferDeviceAddressInfo uBufferBdaInfo{
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = m_buffer
+        .buffer = buffer
     };
-    m_deviceAddress = vkGetBufferDeviceAddress(Context::instance().getDevice(), &uBufferBdaInfo);
+    deviceAddress = vkGetBufferDeviceAddress(ctx.getDevice(), &uBufferBdaInfo);
 }
 
 void Buffer::upload(const void *data, size_t size) {
-    memcpy(m_allocationInfo.pMappedData, data, size);
+    memcpy(allocationInfo.pMappedData, data, size);
 }
 
 void Buffer::destroy() {
     vmaDestroyBuffer(
         Context::instance().getVmaAllocator(),
-        m_buffer,
-        m_allocation);
+        buffer,
+        allocation);
 
-    m_buffer = VK_NULL_HANDLE;
-    m_allocation = VK_NULL_HANDLE;
-    m_allocationInfo = {};
+    buffer = VK_NULL_HANDLE;
+    allocation = VK_NULL_HANDLE;
+    allocationInfo = {};
 }
 
 VkDeviceSize Buffer::size() const {
-    return m_allocationInfo.size;
-}
-
-VkBuffer& Buffer::get() {
-    return m_buffer;
+    return allocationInfo.size;
 }
