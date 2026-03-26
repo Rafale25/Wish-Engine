@@ -309,6 +309,8 @@ void Context::init() {
 		chk(vkCreateImageView(m_device, &viewCI, nullptr, &m_swapchainImageViews[i]));
 	}
 
+    // MARK: Depth Image
+
     std::vector<VkFormat> depthFormatList{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
     for (VkFormat& format : depthFormatList) {
         VkFormatProperties2 formatProperties{ .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2 };
@@ -413,13 +415,6 @@ void Context::beginRendering() {
 
     m_currentCommandBuffer = m_commandBuffers[m_frameIndex];
     chk(vkResetCommandBuffer(m_currentCommandBuffer, 0));
-
-
-    // TEMP
-    // m_shaderData.time = m_timeSinceStart;
-    // memcpy(m_shaderDataBuffers[m_frameIndex].allocationInfo.pMappedData, &m_shaderData, sizeof(ShaderData));
-    // ----
-
 
     VkCommandBufferBeginInfo cbBI {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
