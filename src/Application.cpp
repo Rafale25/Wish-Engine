@@ -1,6 +1,6 @@
 #include "Context.hpp"
 #include "Application.hpp"
-
+#include "UniformBuffer.hpp"
 #include <print>
 
 struct Vertex {
@@ -10,6 +10,7 @@ struct Vertex {
 };
 
 App::App(Context& ctx): View(ctx) {
+    m_uniformBuffer.create(sizeof(ShaderData));
 
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")
@@ -23,14 +24,6 @@ App::App(Context& ctx): View(ctx) {
         .addDynamic(VK_DYNAMIC_STATE_SCISSOR)
         .build();
 
-/*
-    VkPipeline templatePipeline = GraphicsPipelineBuilder{}
-        .set_rasterization(VK_CULL_MODE_BACK_BIT)
-        .set_depth_stencil(VK_TRUE, VK_TRUE)
-        .set_rendering_info(VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_D32_SFLOAT)
-        .add_opaque_attachment()
-        .build(device, pipeline_layout);
-*/
 
     const VkDeviceSize indexCount{6};
     std::vector<Vertex> vertices{
@@ -55,12 +48,14 @@ App::App(Context& ctx): View(ctx) {
 }
 
 void App::onUpdate(double time_since_start, float dt) {
-
+    m_shaderData.time = time_since_start;
 }
 
 void App::onDraw(double time_since_start, float dt) {
     VkCommandBuffer cb = Context::instance().getCommandBuffer();
     Context& ctx = Context::instance();
+
+    m_uniformBuffer.upload(&m_shaderData, sizeof(ShaderData));
 
     VkViewport vp{
         .width = static_cast<float>(ctx.m_framebufferWidth),
@@ -75,7 +70,6 @@ void App::onDraw(double time_since_start, float dt) {
     vkCmdSetViewport(cb, 0, 1, &vp);
     vkCmdSetScissor(cb, 0, 1, &scissor);
 
-
     vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
         VkDeviceSize vOffset{ 0 };
         vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.get(), &vOffset);
@@ -83,7 +77,7 @@ void App::onDraw(double time_since_start, float dt) {
 
         // vkCmdSetLineWidth(cb, 10.0f);
 
-        vkCmdPushConstants(cb, m_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &ctx.m_shaderDataBuffers[ctx.m_frameIndex].deviceAddress);
+        m_uniformBuffer.pushConstant(m_pipeline.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
 
         const VkDeviceSize indexCount{6};
         vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);

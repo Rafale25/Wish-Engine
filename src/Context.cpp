@@ -32,56 +32,6 @@ void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height)
     ctx->m_framebufferHeight = height;
 }
 
-/*
-struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 uv;
-};
-
-void Context::makeModelStuff() {
-
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 uv;
-    };
-
-    const VkDeviceSize indexCount{6};
-    std::vector<Vertex> vertices{
-        {{-1,  1, 0}, {1, 0, 0}, {0, 0}},
-        {{ 1,  1, 0}, {0, 1, 0}, {1, 0}},
-        {{-1, -1, 0}, {0, 0, 1}, {0, 1}},
-        {{ 1, -1, 0}, {0, 1, 1}, {1, 1}},
-    };
-    std::vector<uint16_t> indices{
-        0, 2, 1,
-        2, 1, 3,
-    };
-
-    VkDeviceSize vBufSize{ sizeof(Vertex) * vertices.size() };
-    VkDeviceSize iBufSize{ sizeof(uint16_t) * indices.size() };
-    VkBufferCreateInfo bufferCI{
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = vBufSize + iBufSize,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT
-    };
-
-
-    VkBuffer vBuffer{ VK_NULL_HANDLE };
-    VmaAllocation vBufferAllocation{ VK_NULL_HANDLE };
-    VmaAllocationCreateInfo vBufferAllocCI{
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO
-    };
-    VmaAllocationInfo vBufferAllocInfo{};
-    chk(vmaCreateBuffer(m_allocator, &bufferCI, &vBufferAllocCI, &vBuffer, &vBufferAllocation, &vBufferAllocInfo));
-
-    memcpy(vBufferAllocInfo.pMappedData, vertices.data(), vBufSize);
-    memcpy(((char*)vBufferAllocInfo.pMappedData) + vBufSize, indices.data(), iBufSize);
-}
-*/
-
 void Context::setView(View& view) {
     m_currentView->onExitView();
     m_currentView = &view;
@@ -102,14 +52,14 @@ void Context::run() {
             glfwSetWindowShouldClose(window, true);
 
         double time = glfwGetTime();
-        double timeSinceStart = time - startTime;
+        m_timeSinceStart = time - startTime;
         double deltaTime = time - lastFrameTime;
         lastFrameTime = time;
 
-        m_currentView->onUpdate(timeSinceStart, deltaTime);
+        m_currentView->onUpdate(m_timeSinceStart, deltaTime);
 
         beginRendering();
-        m_currentView->onDraw(timeSinceStart, deltaTime);
+        m_currentView->onDraw(m_timeSinceStart, deltaTime);
         endRendering();
 
         glfwSwapBuffers(window);
@@ -144,14 +94,6 @@ void Context::initWindow() {
 
     glfwGetFramebufferSize(window, &m_framebufferWidth, &m_framebufferHeight);
 }
-
-// void loadShader(const char* name, const char* path) {
-//     Slang::ComPtr<slang::IModule> slangModule{
-//         slangSession->loadModuleFromSource(name, path, nullptr, nullptr)
-//     };
-//     Slang::ComPtr<ISlangBlob> spirv;
-//     slangModule->getTargetCode(0, spirv.writeRef());
-// }
 
 void Context::updateSwapchain() {
     m_updateSwapchain = false;
@@ -199,8 +141,6 @@ void Context::updateSwapchain() {
 
 void Context::init() {
     initWindow();
-
-    // VK_FORMAT_D32_SFLOAT_S8_UINT
 
     // MARK: Instance
     VkApplicationInfo appInfo {
@@ -369,9 +309,7 @@ void Context::init() {
 		chk(vkCreateImageView(m_device, &viewCI, nullptr, &m_swapchainImageViews[i]));
 	}
 
-    // VkFormat depthFormat{ VK_FORMAT_D32_SFLOAT_S8_UINT };
     std::vector<VkFormat> depthFormatList{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
-    // VkFormat m_depthFormat{ VK_FORMAT_UNDEFINED };
     for (VkFormat& format : depthFormatList) {
         VkFormatProperties2 formatProperties{ .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2 };
         vkGetPhysicalDeviceFormatProperties2(m_devices[m_deviceIndex], format, &formatProperties);
@@ -385,7 +323,6 @@ void Context::init() {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = m_depthFormat,
-        // .extent{.width = window.getSize().x, .height = window.getSize().y, .depth = 1 },
         .extent{.width = (uint32_t)m_framebufferWidth, .height = (uint32_t)m_framebufferHeight, .depth = 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
@@ -409,27 +346,6 @@ void Context::init() {
         .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 }
     };
     chk(vkCreateImageView(m_device, &m_depthViewCI, nullptr, &m_depthImageView));
-
-
-    // MARK: ShaderData
-    for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
-        VkBufferCreateInfo uBufferCI{
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            .size = sizeof(ShaderData),
-            .usage = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
-        };
-        VmaAllocationCreateInfo uBufferAllocCI{
-            .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-            .usage = VMA_MEMORY_USAGE_AUTO
-        };
-        chk(vmaCreateBuffer(m_allocator, &uBufferCI, &uBufferAllocCI, &m_shaderDataBuffers[i].buffer, &m_shaderDataBuffers[i].allocation, &m_shaderDataBuffers[i].allocationInfo));
-
-        VkBufferDeviceAddressInfo uBufferBdaInfo{
-            .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-            .buffer = m_shaderDataBuffers[i].buffer
-        };
-        m_shaderDataBuffers[i].deviceAddress = vkGetBufferDeviceAddress(m_device, &uBufferBdaInfo);
-    }
 
     // MARK: Semaphore
 
@@ -485,7 +401,6 @@ void Context::init() {
         .compilerOptionEntryCount = uint32_t(slangOptions.size())
     };
     m_slangGlobalSession->createSession(slangSessionDesc, m_slangSession.writeRef());
-
 }
 
 void Context::beginRendering() {
@@ -499,13 +414,18 @@ void Context::beginRendering() {
     m_currentCommandBuffer = m_commandBuffers[m_frameIndex];
     chk(vkResetCommandBuffer(m_currentCommandBuffer, 0));
 
+
+    // TEMP
+    // m_shaderData.time = m_timeSinceStart;
+    // memcpy(m_shaderDataBuffers[m_frameIndex].allocationInfo.pMappedData, &m_shaderData, sizeof(ShaderData));
+    // ----
+
+
     VkCommandBufferBeginInfo cbBI {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
     };
     chk(vkBeginCommandBuffer(m_currentCommandBuffer, &cbBI));
-
-
 
     // Not sure if should be here
     std::array<VkImageMemoryBarrier2, 2> outputBarriers{

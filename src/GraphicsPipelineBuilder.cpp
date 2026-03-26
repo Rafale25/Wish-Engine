@@ -96,7 +96,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     };
 
     VkPipelineLayout pipelineLayout{ VK_NULL_HANDLE };
-    chk(vkCreatePipelineLayout(ctx.m_device, &pipelineLayoutCI, nullptr, &pipelineLayout));
+    chk(vkCreatePipelineLayout(ctx.getDevice(), &pipelineLayoutCI, nullptr, &pipelineLayout));
 
     VkVertexInputBindingDescription vertexBinding{
         .binding = m_vertexInputBinding.binding,
@@ -196,7 +196,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     };
 
     VkPipeline pipeline{ VK_NULL_HANDLE };
-    chk(vkCreateGraphicsPipelines(ctx.m_device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &pipeline));
+    chk(vkCreateGraphicsPipelines(ctx.getDevice(), VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &pipeline));
 
     return {pipeline, pipelineLayout};
 }

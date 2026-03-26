@@ -4,8 +4,15 @@
 #include "View.hpp"
 #include <vulkan/vulkan.h>
 #include "GraphicsPipelineBuilder.hpp"
+#include "UniformBuffer.hpp"
 
 class Buffer;
+
+struct ShaderData {
+    glm::mat4 projection;
+    glm::mat4 view;
+    float time{0.0f};
+};
 
 class App: public View {
 public:
@@ -16,6 +23,8 @@ public:
     void onResize(int width, int height);
 
 private:
+    UniformBuffer m_uniformBuffer{};
+    ShaderData m_shaderData{};
     Pipeline m_pipeline{};
     Buffer m_bufferVertex{};
     Buffer m_bufferIndices{};

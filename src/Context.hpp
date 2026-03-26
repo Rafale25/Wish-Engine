@@ -10,19 +10,6 @@
 #include <vector>
 #include <string>
 
-struct ShaderData {
-    glm::mat4 projection;
-    glm::mat4 view;
-    float time{0.0f};
-};
-
-struct ShaderDataBuffer {
-    VmaAllocation allocation{ VK_NULL_HANDLE };
-    VmaAllocationInfo allocationInfo{};
-    VkBuffer buffer{ VK_NULL_HANDLE };
-    VkDeviceAddress deviceAddress{};
-};
-
 struct GLFWwindow;
 
 class Context {
@@ -52,6 +39,14 @@ public:
         return m_commandBuffers[m_frameIndex];
     };
 
+    uint32_t getFrameIndex() const {
+        return m_frameIndex;
+    }
+
+    VkDevice getDevice() const {
+        return m_device;
+    }
+
     void setView(View& view);
 
 private:
@@ -74,6 +69,7 @@ public:
     GLFWwindow* window = nullptr;
     int m_framebufferWidth = 0;
     int m_framebufferHeight = 0;
+    double m_timeSinceStart = 0.0;
     // int32_t width = 0, height = 0;
 
 // private:
@@ -100,7 +96,6 @@ public:
     std::array<VkFence, maxFramesInFlight> m_fences;
     std::array<VkSemaphore, maxFramesInFlight> m_presentSemaphores;
     std::vector<VkSemaphore> m_renderSemaphores;
-    std::array<ShaderDataBuffer, maxFramesInFlight> m_shaderDataBuffers;
 
     VkSwapchainKHR m_swapchain{ VK_NULL_HANDLE };
     static constexpr VkFormat SWAPCHAIN_IMAGE_FORMAT{ VK_FORMAT_B8G8R8A8_SRGB };
@@ -120,8 +115,6 @@ public:
 
     // TODO: move everything belowout of Context
     // this should be user data and not generic
-    ShaderData m_shaderData{};
-
     VkSwapchainCreateInfoKHR m_swapchainCI;
 
     VmaAllocation m_depthImageAllocation;
