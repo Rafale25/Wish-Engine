@@ -12,7 +12,18 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
         .usage = VMA_MEMORY_USAGE_AUTO
     };
     VmaAllocationInfo vBufferAllocInfo{};
-    vmaCreateBuffer(Context::instance().getVmaAllocator(), &bufferCI, &bufferAllocCI, &m_buffer, &m_allocation, &m_allocationInfo);
+    vmaCreateBuffer(
+        Context::instance().getVmaAllocator(),
+        &bufferCI, &bufferAllocCI,
+        &m_buffer,
+        &m_allocation,
+        &m_allocationInfo);
+
+    VkBufferDeviceAddressInfo uBufferBdaInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = m_buffer
+    };
+    m_deviceAddress = vkGetBufferDeviceAddress(Context::instance().getDevice(), &uBufferBdaInfo);
 }
 
 void Buffer::upload(const void *data, size_t size) {

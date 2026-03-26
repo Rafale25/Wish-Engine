@@ -18,6 +18,7 @@ private:
     VkBuffer m_buffer{ VK_NULL_HANDLE };
     VmaAllocation m_allocation{ VK_NULL_HANDLE };
     VmaAllocationInfo m_allocationInfo{};
+    VkDeviceAddress m_deviceAddress{};
 };
 
 
