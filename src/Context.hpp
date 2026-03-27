@@ -47,6 +47,22 @@ public:
         return m_device;
     }
 
+    VkImage getSwapchainImage() const {
+        return m_swapchainImages[m_imageIndex];
+    }
+
+    VkImageView getSwapchainImageView() const {
+        return m_swapchainImageViews[m_imageIndex];
+    }
+
+    VkImage getDepthImage() const {
+        return m_depthImage;
+    }
+
+    VkImageView getDepthImageView() const {
+        return m_depthImageView;
+    }
+
     void setView(View& view);
 
 private:

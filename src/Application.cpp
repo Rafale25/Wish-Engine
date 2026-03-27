@@ -1,6 +1,7 @@
 #include "Context.hpp"
 #include "Application.hpp"
 #include "UniformBuffer.hpp"
+#include "RenderPass.hpp"
 #include <print>
 
 struct Vertex {
@@ -57,30 +58,40 @@ void App::onDraw(double time_since_start, float dt) {
 
     m_uniformBuffer.upload(&m_shaderData, sizeof(ShaderData));
 
-    VkViewport vp{
-        .width = static_cast<float>(ctx.m_framebufferWidth),
-        .height = static_cast<float>(ctx.m_framebufferHeight),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
-    VkRect2D scissor{ .extent{
-        .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
-        .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
-    };
-    vkCmdSetViewport(cb, 0, 1, &vp);
-    vkCmdSetScissor(cb, 0, 1, &scissor);
+    auto pass = RenderPass()
+        .color(
+            ctx.getSwapchainImage(),
+            ctx.getSwapchainImageView()
+        )
+        .depth(
+            ctx.getDepthImage(),
+            ctx.getDepthImageView()
+        );
 
-    vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
+    pass.execute([&]() {
+        VkViewport vp{
+            .width = static_cast<float>(ctx.m_framebufferWidth),
+            .height = static_cast<float>(ctx.m_framebufferHeight),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f
+        };
+        VkRect2D scissor{ .extent{
+            .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
+            .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
+        };
+        vkCmdSetViewport(cb, 0, 1, &vp);
+        vkCmdSetScissor(cb, 0, 1, &scissor);
+
+        vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
         VkDeviceSize vOffset{ 0 };
         vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &vOffset);
         vkCmdBindIndexBuffer(cb, m_bufferIndices.buffer, 0, VK_INDEX_TYPE_UINT16);
-
-        // vkCmdSetLineWidth(cb, 10.0f);
 
         m_uniformBuffer.pushConstant(m_pipeline.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
 
         const VkDeviceSize indexCount{6};
         vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
+    });
 }
 
 void App::onResize(int width, int height) {
