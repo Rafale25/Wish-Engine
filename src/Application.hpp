@@ -6,6 +6,8 @@
 #include "GraphicsPipelineBuilder.hpp"
 #include "UniformBuffer.hpp"
 
+#include <glm/ext/matrix_float4x4.hpp>
+
 class Buffer;
 
 struct ShaderData {
