@@ -2,9 +2,8 @@
 #include "Application.hpp"
 #include "UniformBuffer.hpp"
 #include "RenderPass.hpp"
-#include <print>
-
 #include <glm/ext/vector_float3.hpp>
+#include <print>
 
 struct Vertex {
     glm::vec3 pos;

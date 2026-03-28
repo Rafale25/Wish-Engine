@@ -1,10 +1,10 @@
 #include "Context.hpp"
+#include "Logger.hpp"
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 static inline void chk(VkResult result) {
 	if (result != VK_SUCCESS) {
-		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+        logE("Vulkan call returned an error: {}", static_cast<int32_t>(result));
 		exit(result);
 	}
 }
@@ -15,7 +15,7 @@ inline void Context::chkSwapchain(VkResult result) {
 			m_updateSwapchain = true;
 			return;
 		}
-		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+        logE("Vulkan call returned an error: {}", static_cast<int32_t>(result));
 		exit(result);
 	}
 }
@@ -85,7 +85,7 @@ void Context::initWindow() {
     // glfwMakeContextCurrent(window);
 
     if (!glfwVulkanSupported()) {
-        std::cerr << "GLFW doesn't support Vulkan?!!\n";
+        logE("GLFW doesn't support Vulkan?!!");
 		exit(-1);
     }
 
@@ -192,15 +192,13 @@ void Context::init() {
     chk(vkEnumeratePhysicalDevices(m_instance, &m_deviceCount, nullptr));
     m_devices.resize(m_deviceCount);
     chk(vkEnumeratePhysicalDevices(m_instance, &m_deviceCount, m_devices.data()));
-
-    std::println("deviceCount : {}", m_deviceCount);
-
+    logI("deviceCount: {}", m_deviceCount);
 
     // MARK: Choose device
 
     VkPhysicalDeviceProperties2 deviceProperties{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
     vkGetPhysicalDeviceProperties2(m_devices[m_deviceIndex], &deviceProperties);
-    std::cout << "Selected device: " << deviceProperties.properties.deviceName <<  "\n";
+    logI("Selected device: {}", deviceProperties.properties.deviceName);
 
     uint32_t queueFamilyCount{ 0 };
     vkGetPhysicalDeviceQueueFamilyProperties(m_devices[m_deviceIndex], &queueFamilyCount, nullptr);
@@ -215,7 +213,7 @@ void Context::init() {
     }
 
     if (glfwGetPhysicalDevicePresentationSupport(m_instance, m_devices[m_deviceIndex], queueFamily) == GLFW_FALSE) {
-		std::cerr << "Graphic queue doesn't support presentation!\n";
+        logE("Graphic queue doesn't support presentation.");
 		exit(-1);
     }
 

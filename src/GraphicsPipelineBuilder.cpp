@@ -1,12 +1,12 @@
 #include "GraphicsPipelineBuilder.hpp"
 #include "Context.hpp"
+#include "Logger.hpp"
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
-#include <iostream>
 
 static inline void chk(VkResult result) {
 	if (result != VK_SUCCESS) {
-		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+        logE("Vulkan call returned an error: {}", static_cast<int32_t>(result));
 		exit(result);
 	}
 }

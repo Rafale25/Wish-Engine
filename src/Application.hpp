@@ -3,16 +3,15 @@
 #include "Buffer.hpp"
 #include "View.hpp"
 #include <vulkan/vulkan.h>
+#include <glm/ext/matrix_float4x4.hpp>
 #include "GraphicsPipelineBuilder.hpp"
 #include "UniformBuffer.hpp"
-
-#include <glm/ext/matrix_float4x4.hpp>
 
 class Buffer;
 
 struct ShaderData {
-    glm::mat4 projection;
-    glm::mat4 view;
+    glm::mat4 projection{1.0f};
+    glm::mat4 view{1.0f};
     float time{0.0f};
 };
 
