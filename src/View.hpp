@@ -1,13 +1,8 @@
 #pragma once
 
-class Context;
-
 class View {
     public:
-        Context& ctx;
-
-    public:
-        View(Context& ctx): ctx(ctx) {};
+        View() {};
         virtual ~View() = default;
 
         virtual void onEnterView() {}
@@ -32,7 +27,7 @@ class View {
 
 class DefaultView: public View {
     public:
-        DefaultView(Context& ctx): View(ctx) {}
+        DefaultView() {}
 
         void onEnterView() {}
 

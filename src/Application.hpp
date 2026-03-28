@@ -16,7 +16,7 @@ struct ShaderData {
 
 class App: public View {
 public:
-    App(Context& ctx);
+    App();
 
     void onUpdate(double time_since_start, float dt);
     void onDraw(double time_since_start, float dt);

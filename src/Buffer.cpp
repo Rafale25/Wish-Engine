@@ -7,7 +7,7 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
     VkBufferCreateInfo bufferCI{
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
-        .usage = usage
+        .usage = usage | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
     };
 
     VmaAllocationCreateInfo bufferAllocCI{
@@ -33,6 +33,7 @@ void Buffer::upload(const void *data, size_t size) {
 }
 
 void Buffer::destroy() {
+    vkDeviceWaitIdle(Context::instance().getDevice());
     vmaDestroyBuffer(
         Context::instance().getVmaAllocator(),
         buffer,

@@ -23,10 +23,10 @@ inline void Context::chkSwapchain(VkResult result) {
 	}
 }
 
-// Context::~Context() {
-    // cleanup();
-    // glfwTerminate();
-// }
+Context::~Context() {
+    cleanup();
+    glfwTerminate();
+}
 
 void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
@@ -43,7 +43,7 @@ void Context::setView(View& view) {
     view.onEnterView();
 
     // call resize callback on first frame
-    glfwGetWindowSize(window, &m_framebufferWidth, &m_framebufferHeight);
+    glfwGetFramebufferSize(window, &m_framebufferWidth, &m_framebufferHeight);
     framebufferSizeCallback(window, m_framebufferWidth, m_framebufferHeight);
 }
 
@@ -105,7 +105,12 @@ void Context::cleanup() {
     for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
         vkDestroyFence(m_device, m_fences[i], nullptr);
         vkDestroySemaphore(m_device, m_presentSemaphores[i], nullptr);
+
     }
+
+    // std::vector<VkImage> m_swapchainImages;
+    // VkImage m_depthImage;
+    // vkDestroyImageView(m_device, m_depthImageView, nullptr);
 
     vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
 

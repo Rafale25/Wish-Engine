@@ -5,7 +5,7 @@ int main() {
     Context& ctx = Context::instance();
     ctx.init();
 
-    App appView(ctx);
+    App appView;
 
     // ctx.setVsync(VSYNC);
     ctx.setView(appView);

@@ -6,6 +6,7 @@
 class Buffer {
 public:
     Buffer() = default;
+    ~Buffer() { destroy(); };
 
     void create(VkDeviceSize size, VkBufferUsageFlags usage);
     void upload(const void *data, size_t size);

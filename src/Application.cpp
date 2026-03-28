@@ -10,11 +10,15 @@ struct Vertex {
     glm::vec2 uv;
 };
 
-App::App(Context& ctx): View(ctx) {
+App::App() {
+    const Context& ctx = Context::instance();
+
     m_uniformBuffer.create(sizeof(ShaderData));
 
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")
+        // .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT),
+        // .addDepthAttachmentFormat(ctx.getDepthImageFormat()),
         .addVertexBinding(0, sizeof(Vertex))
         .addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))
         .addVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
@@ -24,7 +28,6 @@ App::App(Context& ctx): View(ctx) {
         .addDynamic(VK_DYNAMIC_STATE_VIEWPORT)
         .addDynamic(VK_DYNAMIC_STATE_SCISSOR)
         .build();
-
 
     const VkDeviceSize indexCount{6};
     std::vector<Vertex> vertices{

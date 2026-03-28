@@ -72,7 +72,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     const Context& ctx = Context::instance();
 
     Slang::ComPtr<slang::IModule> slangModule{
-        ctx.m_slangSession->loadModuleFromSource(m_moduleName.c_str(), m_shaderPath.c_str(), nullptr, nullptr)
+        ctx.getSlangSession()->loadModuleFromSource(m_moduleName.c_str(), m_shaderPath.c_str(), nullptr, nullptr)
     };
     Slang::ComPtr<ISlangBlob> spirv;
     slangModule->getTargetCode(0, spirv.writeRef());
@@ -83,8 +83,9 @@ Pipeline GraphicsPipelineBuilder::build() {
         .pCode = (uint32_t*)spirv->getBufferPointer()
     };
 
+    // TODO: need to add stage depending on shaders stage included
     VkPushConstantRange pushConstantRange{
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         .size = sizeof(VkDeviceAddress)
     };
     VkPipelineLayoutCreateInfo pipelineLayoutCI{

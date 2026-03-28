@@ -15,7 +15,7 @@ struct GLFWwindow;
 class Context {
 private:
     Context() = default;
-    ~Context() = default;
+    ~Context();// = default;
 
     Context(const Context&) = delete;
     Context(Context&&)      = delete;
@@ -34,6 +34,10 @@ public:
 
     const VmaAllocator& getVmaAllocator() const {
         return m_allocator;
+    }
+
+    const Slang::ComPtr<slang::ISession>& getSlangSession() const {
+        return m_slangSession;
     }
 
     VkCommandBuffer getCommandBuffer() const {
@@ -64,8 +68,12 @@ public:
         return m_depthImageView;
     }
 
-    uint32_t width() const { return m_framebufferWidth; };
-    uint32_t height() const { return m_framebufferHeight; };
+    // VkFormat getDepthImageFormat() const {
+    //     return
+    // }
+
+    uint32_t width() const { return static_cast<uint32_t>(m_framebufferWidth); };
+    uint32_t height() const { return static_cast<uint32_t>(m_framebufferHeight); };
 
 private:
     void initWindow();
@@ -87,19 +95,19 @@ private:
 public:
     // GLFW
     GLFWwindow* window = nullptr;
-    int m_framebufferWidth = 0;
-    int m_framebufferHeight = 0;
+    int32_t m_framebufferWidth = 0;
+    int32_t m_framebufferHeight = 0;
     double m_timeSinceStart = 0.0;
 
+    static constexpr uint32_t API_VERSION = VK_API_VERSION_1_4;
+    static constexpr uint32_t maxFramesInFlight{ 2 }; // Will be configurable at runtime in the futur
+
 // private:
-    DefaultView m_defaultView{*this};
+    DefaultView m_defaultView;
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
 
     // Vulkan
-    static constexpr uint32_t API_VERSION = VK_API_VERSION_1_4;
-    static constexpr uint32_t maxFramesInFlight{ 2 }; // Will be configurable at runtime in the futur
-
     VkInstance m_instance{ VK_NULL_HANDLE };
     std::vector<VkPhysicalDevice> m_devices;
     uint32_t m_deviceCount{ 0 };
@@ -140,6 +148,8 @@ public:
     VkFormat m_depthFormat{ VK_FORMAT_UNDEFINED };
     VkImageCreateInfo m_depthImageCI;
     VkImage m_depthImage;
+
+    VmaAllocation m_depthImageViewAllocation;
     VkImageView m_depthImageView;
     VkImageViewCreateInfo m_depthViewCI;
 

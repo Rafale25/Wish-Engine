@@ -56,14 +56,14 @@ void RenderPass::beginRendering() {
 
     if (doDefaultViewportScissor) {
         VkViewport vp{
-            .width = static_cast<float>(ctx.m_framebufferWidth),
-            .height = static_cast<float>(ctx.m_framebufferHeight),
+            .width = static_cast<float>(ctx.width()),
+            .height = static_cast<float>(ctx.height()),
             .minDepth = 0.0f,
             .maxDepth = 1.0f
         };
         VkRect2D scissor{ .extent{
-            .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
-            .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
+            .width = static_cast<uint32_t>(ctx.width()),
+            .height = static_cast<uint32_t>(ctx.height()) }
         };
         vkCmdSetViewport(cb, 0, 1, &vp);
         vkCmdSetScissor(cb, 0, 1, &scissor);

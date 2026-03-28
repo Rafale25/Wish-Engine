@@ -39,7 +39,7 @@ struct ShaderData {
 // }
 
 [shader("vertex")]
-VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u, uint instanceIndex : SV_VulkanInstanceID) {
+VSOutput main(VSInput input, uint instanceIndex : SV_VulkanInstanceID) {
 // VSOutput main(VSInput input, uint instanceIndex: SV_VulkanInstanceID) {
     VSOutput output;
 
