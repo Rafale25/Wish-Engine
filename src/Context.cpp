@@ -23,6 +23,11 @@ inline void Context::chkSwapchain(VkResult result) {
 	}
 }
 
+// Context::~Context() {
+    // cleanup();
+    // glfwTerminate();
+// }
+
 void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
 
@@ -95,6 +100,21 @@ void Context::initWindow() {
     glfwGetFramebufferSize(window, &m_framebufferWidth, &m_framebufferHeight);
 }
 
+void Context::cleanup() {
+    chk(vkDeviceWaitIdle(m_device));
+    for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
+        vkDestroyFence(m_device, m_fences[i], nullptr);
+        vkDestroySemaphore(m_device, m_presentSemaphores[i], nullptr);
+    }
+
+    vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
+
+    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+    vmaDestroyAllocator(m_allocator);
+    vkDestroyDevice(m_device, nullptr);
+    vkDestroyInstance(m_instance, nullptr);
+}
+
 void Context::updateSwapchain() {
     m_updateSwapchain = false;
     vkDeviceWaitIdle(m_device);
@@ -164,7 +184,6 @@ void Context::init() {
     // MARK: Device count
 
     chk(vkEnumeratePhysicalDevices(m_instance, &m_deviceCount, nullptr));
-    // std::vector<VkPhysicalDevice> devices(m_deviceCount);
     m_devices.resize(m_deviceCount);
     chk(vkEnumeratePhysicalDevices(m_instance, &m_deviceCount, m_devices.data()));
 
@@ -421,71 +440,9 @@ void Context::beginRendering() {
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
     };
     chk(vkBeginCommandBuffer(m_currentCommandBuffer, &cbBI));
-
-    // Not sure if should be here
-    // std::array<VkImageMemoryBarrier2, 2> outputBarriers{
-    //     VkImageMemoryBarrier2{
-    //         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-    //         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //         .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // I set it to this instead of 0 for consistency but isn't needed because we are changing the color image each frame //0,
-    //         .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-    //         .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    //         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-    //         .image = m_swapchainImages[m_imageIndex],
-    //         .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
-    //     },
-    //     VkImageMemoryBarrier2{
-    //         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-    //         .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-    //         .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, // need to set it instead of 0 because the specs says so?
-    //         .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
-    //         .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-    //         .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    //         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-    //         .image = m_depthImage,
-    //         .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, .levelCount = 1, .layerCount = 1 }
-    //     }
-    // };
-    // VkDependencyInfo barrierDependencyInfo{
-    //     .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-    //     .imageMemoryBarrierCount = 2,
-    //     .pImageMemoryBarriers = outputBarriers.data()
-    // };
-    // vkCmdPipelineBarrier2(m_currentCommandBuffer, &barrierDependencyInfo);
-
-    // VkRenderingAttachmentInfo colorAttachmentInfo{
-    //     .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    //     .imageView = m_swapchainImageViews[m_imageIndex],
-    //     .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    //     .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    //     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    //     .clearValue{.color{ {0.0f, 0.0f, 0.0f, 1.0f} }}
-    // };
-    // VkRenderingAttachmentInfo depthAttachmentInfo{
-    //     .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    //     .imageView = m_depthImageView,
-    //     .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    //     .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    //     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-    //     .clearValue = {.depthStencil = {1.0f,  0}}
-    // };
-
-    // VkRenderingInfo renderingInfo{
-    //     .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-    //     .renderArea{.extent{.width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight) }},
-    //     .layerCount = 1,
-    //     .colorAttachmentCount = 1,
-    //     .pColorAttachments = &colorAttachmentInfo,
-    //     .pDepthAttachment = &depthAttachmentInfo
-    // };
-    // vkCmdBeginRendering(m_currentCommandBuffer, &renderingInfo);
 }
 
 void Context::endRendering() {
-
-    // vkCmdEndRendering(m_currentCommandBuffer);
-
     VkImageMemoryBarrier2 barrierPresent{
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,

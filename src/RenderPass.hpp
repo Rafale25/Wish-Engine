@@ -60,6 +60,8 @@ public:
         VkRenderingAttachmentInfo attachmentInfo=defaultDepthAttachmentInfo,
         VkImageMemoryBarrier2 barrier=defaultDepthBarrier);
 
+    RenderPass& defaultViewportScissor();
+
     void beginRendering();
     void endRendering();
     void execute(std::function<void()> func);
@@ -69,5 +71,6 @@ private:
     uint32_t m_height = 0;
     std::vector<VkImageMemoryBarrier2> m_barriers;
     std::vector<VkRenderingAttachmentInfo> m_colorAttachments;
-    VkRenderingAttachmentInfo m_depthAttachment;
+    VkRenderingAttachmentInfo m_depthAttachment{};
+    bool doDefaultViewportScissor = false;
 };

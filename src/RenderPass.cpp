@@ -23,6 +23,11 @@ RenderPass& RenderPass::depth(VkImage image, VkImageView imageView, VkRenderingA
     return *this;
 }
 
+RenderPass& RenderPass::defaultViewportScissor() {
+    doDefaultViewportScissor = true;
+    return *this;
+}
+
 void RenderPass::beginRendering() {
     const Context& ctx = Context::instance();
     const auto cb = ctx.getCommandBuffer();
@@ -48,6 +53,21 @@ void RenderPass::beginRendering() {
         .pDepthAttachment = &m_depthAttachment
     };
     vkCmdBeginRendering(cb, &renderingInfo);
+
+    if (doDefaultViewportScissor) {
+        VkViewport vp{
+            .width = static_cast<float>(ctx.m_framebufferWidth),
+            .height = static_cast<float>(ctx.m_framebufferHeight),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f
+        };
+        VkRect2D scissor{ .extent{
+            .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
+            .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
+        };
+        vkCmdSetViewport(cb, 0, 1, &vp);
+        vkCmdSetScissor(cb, 0, 1, &scissor);
+    }
 }
 
 void RenderPass::endRendering() {

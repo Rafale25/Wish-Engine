@@ -14,7 +14,6 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
         .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO
     };
-    VmaAllocationInfo vBufferAllocInfo{};
     vmaCreateBuffer(
         ctx.getVmaAllocator(),
         &bufferCI, &bufferAllocCI,

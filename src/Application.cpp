@@ -59,29 +59,15 @@ void App::onDraw(double time_since_start, float dt) {
     m_uniformBuffer.upload(&m_shaderData, sizeof(ShaderData));
 
     auto pass = RenderPass()
+        .defaultViewportScissor()
         .color(
             ctx.getSwapchainImage(),
-            ctx.getSwapchainImageView()
-        )
+            ctx.getSwapchainImageView())
         .depth(
             ctx.getDepthImage(),
-            ctx.getDepthImageView()
-        );
+            ctx.getDepthImageView());
 
     pass.execute([&]() {
-        VkViewport vp{
-            .width = static_cast<float>(ctx.m_framebufferWidth),
-            .height = static_cast<float>(ctx.m_framebufferHeight),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f
-        };
-        VkRect2D scissor{ .extent{
-            .width = static_cast<uint32_t>(ctx.m_framebufferWidth),
-            .height = static_cast<uint32_t>(ctx.m_framebufferHeight) }
-        };
-        vkCmdSetViewport(cb, 0, 1, &vp);
-        vkCmdSetScissor(cb, 0, 1, &scissor);
-
         vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
         VkDeviceSize vOffset{ 0 };
         vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &vOffset);

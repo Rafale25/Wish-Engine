@@ -15,7 +15,7 @@ struct GLFWwindow;
 class Context {
 private:
     Context() = default;
-    ~Context() = default; // TODO: cleanup stuff in destructor
+    ~Context() = default;
 
     Context(const Context&) = delete;
     Context(Context&&)      = delete;
@@ -30,6 +30,7 @@ public:
 
     void init();
     void run();
+    void setView(View& view);
 
     const VmaAllocator& getVmaAllocator() const {
         return m_allocator;
@@ -63,7 +64,8 @@ public:
         return m_depthImageView;
     }
 
-    void setView(View& view);
+    uint32_t width() const { return m_framebufferWidth; };
+    uint32_t height() const { return m_framebufferHeight; };
 
 private:
     void initWindow();
@@ -72,6 +74,8 @@ private:
 
     void beginRendering();
     void endRendering();
+
+    void cleanup();
 
     // static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     // static void cursorPositionCallback(GLFWwindow* window, double x, double y);
@@ -86,7 +90,6 @@ public:
     int m_framebufferWidth = 0;
     int m_framebufferHeight = 0;
     double m_timeSinceStart = 0.0;
-    // int32_t width = 0, height = 0;
 
 // private:
     DefaultView m_defaultView{*this};
