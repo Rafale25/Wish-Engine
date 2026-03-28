@@ -15,6 +15,8 @@ class GraphicsPipelineBuilder {
 public:
 
     GraphicsPipelineBuilder& setShaders(const char* moduleName, const char* path);
+    GraphicsPipelineBuilder& addColorAttachmentFormat(VkFormat format);
+    GraphicsPipelineBuilder& setDepthAttachmentFormat(VkFormat format);
     GraphicsPipelineBuilder& addVertexBinding(uint32_t binding, uint32_t stride);
     GraphicsPipelineBuilder& addVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
     GraphicsPipelineBuilder& setTopology(VkPrimitiveTopology topology);
@@ -40,6 +42,9 @@ private:
     VkFrontFace m_frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     VkCompareOp m_compareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     VkColorComponentFlags m_colorWriteMask = 0xF;
+
+    std::vector<VkFormat> m_colorAttachmentFormats;
+    VkFormat m_depthAttachmentFormat{};
 
     std::vector<VkDynamicState> m_dynamicStates;
 

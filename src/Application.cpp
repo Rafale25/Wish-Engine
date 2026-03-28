@@ -17,8 +17,8 @@ App::App() {
 
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")
-        // .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT),
-        // .addDepthAttachmentFormat(ctx.getDepthImageFormat()),
+        .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT)
+        .setDepthAttachmentFormat(ctx.getDepthImageFormat())
         .addVertexBinding(0, sizeof(Vertex))
         .addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))
         .addVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))

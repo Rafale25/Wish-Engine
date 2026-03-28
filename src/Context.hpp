@@ -68,9 +68,9 @@ public:
         return m_depthImageView;
     }
 
-    // VkFormat getDepthImageFormat() const {
-    //     return
-    // }
+    VkFormat getDepthImageFormat() const {
+        return m_depthFormat;
+    }
 
     uint32_t width() const { return static_cast<uint32_t>(m_framebufferWidth); };
     uint32_t height() const { return static_cast<uint32_t>(m_framebufferHeight); };
@@ -99,10 +99,13 @@ public:
     int32_t m_framebufferHeight = 0;
     double m_timeSinceStart = 0.0;
 
+    // Vulkan
     static constexpr uint32_t API_VERSION = VK_API_VERSION_1_4;
     static constexpr uint32_t maxFramesInFlight{ 2 }; // Will be configurable at runtime in the futur
+    static constexpr VkFormat SWAPCHAIN_IMAGE_FORMAT{ VK_FORMAT_B8G8R8A8_SRGB };
 
-// private:
+private:
+    // GLFW
     DefaultView m_defaultView;
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
@@ -125,7 +128,6 @@ public:
     std::vector<VkSemaphore> m_renderSemaphores;
 
     VkSwapchainKHR m_swapchain{ VK_NULL_HANDLE };
-    static constexpr VkFormat SWAPCHAIN_IMAGE_FORMAT{ VK_FORMAT_B8G8R8A8_SRGB };
     uint32_t m_swapchainImageCount{ 0 };
     std::vector<VkImage> m_swapchainImages;
     std::vector<VkImageView> m_swapchainImageViews;
@@ -149,8 +151,6 @@ public:
     VkImageCreateInfo m_depthImageCI;
     VkImage m_depthImage;
 
-    VmaAllocation m_depthImageViewAllocation;
     VkImageView m_depthImageView;
     VkImageViewCreateInfo m_depthViewCI;
-
 };

@@ -17,6 +17,17 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::setShaders(const char* moduleN
     return *this;
 }
 
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::addColorAttachmentFormat(VkFormat format) {
+    m_colorAttachmentFormats.push_back(format);
+    return *this;
+}
+
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::setDepthAttachmentFormat(VkFormat format) {
+    m_depthAttachmentFormat = format;
+    return *this;
+}
+
+
 GraphicsPipelineBuilder& GraphicsPipelineBuilder::addVertexBinding(uint32_t binding, uint32_t stride) {
     m_vertexInputBinding.binding = binding;
     m_vertexInputBinding.stride = stride;
@@ -152,12 +163,12 @@ Pipeline GraphicsPipelineBuilder::build() {
     };
 
     // TODO: make image format depends on custom input from setAddOpaqueAttachment
-    const VkFormat imageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
+    // const VkFormat imageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
     VkPipelineRenderingCreateInfo renderingCI{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &imageFormat,
-        .depthAttachmentFormat = ctx.m_depthFormat
+        .colorAttachmentCount = static_cast<uint32_t>(m_colorAttachmentFormats.size()),
+        .pColorAttachmentFormats = m_colorAttachmentFormats.data(),
+        .depthAttachmentFormat = m_depthAttachmentFormat
     };
 
     VkPipelineColorBlendAttachmentState blendAttachment{
