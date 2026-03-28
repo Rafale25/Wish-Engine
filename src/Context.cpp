@@ -105,14 +105,18 @@ void Context::cleanup() {
     for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
         vkDestroyFence(m_device, m_fences[i], nullptr);
         vkDestroySemaphore(m_device, m_presentSemaphores[i], nullptr);
-
+        vkDestroySemaphore(m_device, m_renderSemaphores[i], nullptr);
     }
 
-    // std::vector<VkImage> m_swapchainImages;
-    // VkImage m_depthImage;
-    // vkDestroyImageView(m_device, m_depthImageView, nullptr);
+    for (uint32_t i = 0 ; i < maxFramesInFlight; ++i) {
+        vkDestroyImageView(m_device, m_swapchainImageViews[i], nullptr);
+    }
+    vkDestroyImageView(m_device, m_depthImageView, nullptr);
 
     vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
+
+    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
     vkDestroyCommandPool(m_device, m_commandPool, nullptr);
     vmaDestroyAllocator(m_allocator);

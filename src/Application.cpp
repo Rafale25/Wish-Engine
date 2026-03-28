@@ -10,6 +10,10 @@ struct Vertex {
     glm::vec2 uv;
 };
 
+App::~App() {
+    m_pipeline.destroy();
+}
+
 App::App() {
     const Context& ctx = Context::instance();
 
