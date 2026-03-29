@@ -103,11 +103,21 @@ public:
     static constexpr uint32_t maxFramesInFlight{ 2 }; // Will be configurable at runtime in the futur
     static constexpr VkFormat SWAPCHAIN_IMAGE_FORMAT{ VK_FORMAT_B8G8R8A8_SRGB };
 
+    #ifdef NDEBUG
+        static constexpr bool ENABLE_VALIDATION_LAYERS = false;
+    #else
+        static constexpr bool ENABLE_VALIDATION_LAYERS = true;
+    #endif
+
 private:
     // GLFW
     DefaultView m_defaultView;
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
+
+    const std::vector<char const*> validationLayers = {
+        "VK_LAYER_KHRONOS_validation"
+    };
 
     // Vulkan
     VkInstance m_instance{ VK_NULL_HANDLE };

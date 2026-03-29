@@ -165,6 +165,65 @@ void Context::updateSwapchain() {
     chk(vkCreateImageView(m_device, &viewCI, nullptr, &m_depthImageView));
 }
 
+static VKAPI_ATTR VkBool32 VKAPI_CALL logCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData
+) {
+    (void)messageType;
+    (void)pUserData;
+
+    switch (messageSeverity) {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: logT("{}", pCallbackData->pMessage); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:    logI("{}", pCallbackData->pMessage); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: logW("{}", pCallbackData->pMessage); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:   logE("{}", pCallbackData->pMessage); break;
+        default:                                              logM("{}", pCallbackData->pMessage); break;
+    }
+
+    return VK_FALSE;
+}
+
+static VkDebugUtilsMessengerCreateInfoEXT getDebugUtilsMessengerCreateInfo() {
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        .pNext = NULL,
+        .flags = 0,
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        .pfnUserCallback = logCallback,
+        .pUserData = NULL
+    };
+
+    return createInfo;
+}
+
+// VkDebugUtilsMessengerEXT createDebugUtilsMessenger(VkInstance instance) {
+//     VkDebugUtilsMessengerEXT logger{ nullptr };
+//     PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+//     VkDebugUtilsMessengerCreateInfoEXT createInfo = getCreateInfo();
+
+//     if (func) {
+//         func(instance, &createInfo, NULL, &logger);
+//     }
+
+//     return logger;
+// }
+
+static std::vector<const char*> getExtensions() {
+    uint32_t instanceExtensionsCount{ 0 };
+    const char* const* instanceExtensions{ glfwGetRequiredInstanceExtensions(&instanceExtensionsCount) };
+
+    std::vector<const char*> instanceExtensionsVector(instanceExtensions, instanceExtensions + instanceExtensionsCount);
+
+    if (Context::ENABLE_VALIDATION_LAYERS) {
+        instanceExtensionsVector.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return instanceExtensionsVector;
+}
+
 void Context::init() {
     initWindow();
 
@@ -175,15 +234,26 @@ void Context::init() {
         .apiVersion = VK_API_VERSION_1_4
     };
 
-    uint32_t instanceExtensionsCount{ 0 };
-    char const* const* instanceExtensions{ glfwGetRequiredInstanceExtensions(&instanceExtensionsCount) };
+    auto instanceExtensions = getExtensions();
 
     VkInstanceCreateInfo instanceCI{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &appInfo,
-        .enabledExtensionCount = instanceExtensionsCount,
-        .ppEnabledExtensionNames = instanceExtensions,
+        .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
+        .ppEnabledExtensionNames = instanceExtensions.data(),
     };
+
+    VkDebugUtilsMessengerCreateInfoEXT logCallback = getDebugUtilsMessengerCreateInfo();
+
+    if (ENABLE_VALIDATION_LAYERS) {
+        instanceCI.pNext = &logCallback;
+        instanceCI.enabledLayerCount = validationLayers.size();
+        instanceCI.ppEnabledLayerNames = validationLayers.data();
+    } else {
+        instanceCI.pNext = nullptr;
+        instanceCI.enabledLayerCount = 0;
+        instanceCI.ppEnabledLayerNames = nullptr;
+    }
 
     chk(vkCreateInstance(&instanceCI, nullptr, &m_instance));
 
@@ -231,6 +301,7 @@ void Context::init() {
     const std::vector<const char*> deviceExtensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME,
+        // VK_EXT_DEBUG_UTILS_EXTENSION_NAME
     };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{

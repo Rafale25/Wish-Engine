@@ -46,7 +46,7 @@ struct std::formatter<T>
 #define logW(x, ...) _log(x, "93", "Warn", ##__VA_ARGS__)
 #define logE(x, ...) _log(x, "91", "Error", ##__VA_ARGS__)
 #define logF(x, ...) _log(x, "101", "Fatal", ##__VA_ARGS__)
-
+#define logM(x, ...) _log(x, "0", "Message", ##__VA_ARGS__)
 
 // template <typename... Args>
 // inline void my_print(std::format_string<Args...> fmt, Args&&... args) {
