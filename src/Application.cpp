@@ -30,8 +30,6 @@ App::App() {
         .addVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv))
         .setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .setPolygonMode(VK_POLYGON_MODE_FILL)
-        .addDynamic(VK_DYNAMIC_STATE_VIEWPORT)
-        .addDynamic(VK_DYNAMIC_STATE_SCISSOR)
         .build();
 
     const VkDeviceSize indexCount{6};

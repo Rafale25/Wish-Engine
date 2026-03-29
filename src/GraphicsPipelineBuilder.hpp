@@ -58,7 +58,7 @@ private:
     // Should always add viewport and scissor
     // VK_DYNAMIC_STATE_VIEWPORT
     // VK_DYNAMIC_STATE_SCISSOR
-    std::vector<VkDynamicState> m_dynamicStates;
+    std::vector<VkDynamicState> m_dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
     // TODO: make so we can have multiple
     VkVertexInputBindingDescription m_vertexInputBinding{};

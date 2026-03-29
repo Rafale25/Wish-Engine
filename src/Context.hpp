@@ -31,46 +31,16 @@ public:
     void run();
     void setView(View& view);
 
-    const VmaAllocator& getVmaAllocator() const {
-        return m_allocator;
-    }
-
-    const Slang::ComPtr<slang::ISession>& getSlangSession() const {
-        return m_slangSession;
-    }
-
-    VkCommandBuffer getCommandBuffer() const {
-        return m_commandBuffers[m_frameIndex];
-    };
-
-    uint32_t getFrameIndex() const {
-        return m_frameIndex;
-    }
-
-    VkDevice getDevice() const {
-        return m_device;
-    }
-
-    VkImage getSwapchainImage() const {
-        return m_swapchainImages[m_imageIndex];
-    }
-
-    VkImageView getSwapchainImageView() const {
-        return m_swapchainImageViews[m_imageIndex];
-    }
-
-    VkImage getDepthImage() const {
-        return m_depthImage;
-    }
-
-    VkImageView getDepthImageView() const {
-        return m_depthImageView;
-    }
-
-    VkFormat getDepthImageFormat() const {
-        return m_depthFormat;
-    }
-
+    const VmaAllocator& getVmaAllocator() const { return m_allocator; }
+    const Slang::ComPtr<slang::ISession>& getSlangSession() const { return m_slangSession; }
+    VkCommandBuffer getCommandBuffer() const { return m_commandBuffers[m_frameIndex]; }
+    uint32_t getFrameIndex() const { return m_frameIndex; }
+    VkDevice getDevice() const { return m_device; }
+    VkImage getSwapchainImage() const { return m_swapchainImages[m_imageIndex]; }
+    VkImageView getSwapchainImageView() const { return m_swapchainImageViews[m_imageIndex]; }
+    VkImage getDepthImage() const { return m_depthImage; }
+    VkImageView getDepthImageView() const { return m_depthImageView; }
+    VkFormat getDepthImageFormat() const { return m_depthFormat; }
     uint32_t width() const { return static_cast<uint32_t>(m_framebufferWidth); };
     uint32_t height() const { return static_cast<uint32_t>(m_framebufferHeight); };
 
