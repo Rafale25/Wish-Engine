@@ -305,7 +305,6 @@ void Context::init() {
     const std::vector<const char*> deviceExtensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME,
-        // VK_EXT_DEBUG_UTILS_EXTENSION_NAME
     };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{
