@@ -162,8 +162,6 @@ Pipeline GraphicsPipelineBuilder::build() {
         .depthCompareOp = m_compareOp
     };
 
-    // TODO: make image format depends on custom input from setAddOpaqueAttachment
-    // const VkFormat imageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
     VkPipelineRenderingCreateInfo renderingCI{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .colorAttachmentCount = static_cast<uint32_t>(m_colorAttachmentFormats.size()),

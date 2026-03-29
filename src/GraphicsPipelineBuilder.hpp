@@ -55,6 +55,9 @@ private:
     std::vector<VkFormat> m_colorAttachmentFormats;
     VkFormat m_depthAttachmentFormat{};
 
+    // Should always add viewport and scissor
+    // VK_DYNAMIC_STATE_VIEWPORT
+    // VK_DYNAMIC_STATE_SCISSOR
     std::vector<VkDynamicState> m_dynamicStates;
 
     // TODO: make so we can have multiple
