@@ -1,9 +1,7 @@
 #pragma once
 
 #include <cstdarg>
-#include <cstdio>
 #include <print>
-#include <chrono>
 
 #define GLM_EXT_INCLUDED
 #include <glm/gtx/type_trait.hpp>
@@ -30,6 +28,8 @@ struct std::formatter<T>
 #ifdef NO_CHRONO_CURRENT_ZONE
     #define _LOG_CHRONO 0
 #else
+    #include <cstdio>
+    #include <chrono>
     #define _LOG_CHRONO std::chrono::floor<std::chrono::milliseconds>(std::chrono::current_zone()->to_local(std::chrono::system_clock::now())) // TODO: current_zone()->to_local doesn't seem to work
 #endif
 
