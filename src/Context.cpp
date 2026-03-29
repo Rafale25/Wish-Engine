@@ -108,9 +108,10 @@ void Context::cleanup() {
     for (uint32_t i = 0 ; i < maxFramesInFlight; ++i) {
         vkDestroyImageView(m_device, m_swapchainImageViews[i], nullptr);
     }
-    vkDestroyImageView(m_device, m_depthImageView, nullptr);
+    // vkDestroyImageView(m_device, m_depthImageView, nullptr);
+    // vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
 
-    vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
+    m_depthTexture.destroy();
 
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
@@ -146,23 +147,15 @@ void Context::updateSwapchain() {
         chk(vkCreateImageView(m_device, &viewCI, nullptr, &m_swapchainImageViews[i]));
     }
     vkDestroySwapchainKHR(m_device, m_swapchainCI.oldSwapchain, nullptr);
-    vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
-    vkDestroyImageView(m_device, m_depthImageView, nullptr);
 
-    m_depthImageCI.extent = { .width = static_cast<uint32_t>(m_framebufferWidth), .height = static_cast<uint32_t>(m_framebufferHeight), .depth = 1 };
-    VmaAllocationCreateInfo allocCI{
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO
-    };
-    chk(vmaCreateImage(m_allocator, &m_depthImageCI, &allocCI, &m_depthImage, &m_depthImageAllocation, nullptr));
-    VkImageViewCreateInfo viewCI{
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = m_depthImage,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = m_depthFormat,
-        .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 }
-    };
-    chk(vkCreateImageView(m_device, &viewCI, nullptr, &m_depthImageView));
+    m_depthTexture.destroy();
+
+    m_depthTexture.create(
+        m_depthFormat,
+        m_framebufferWidth,
+        m_framebufferHeight,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL logCallback(
@@ -418,33 +411,12 @@ void Context::init() {
         }
     }
 
-    m_depthImageCI = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = m_depthFormat,
-        .extent{.width = (uint32_t)m_framebufferWidth, .height = (uint32_t)m_framebufferHeight, .depth = 1 },
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    };
-
-    VmaAllocationCreateInfo allocCI{
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO
-    };
-    chk(vmaCreateImage(m_allocator, &m_depthImageCI, &allocCI, &m_depthImage, &m_depthImageAllocation, nullptr));
-
-    m_depthViewCI = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = m_depthImage,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = m_depthFormat,
-        .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 }
-    };
-    chk(vkCreateImageView(m_device, &m_depthViewCI, nullptr, &m_depthImageView));
+    m_depthTexture.create(
+        m_depthFormat,
+        m_framebufferWidth,
+        m_framebufferHeight,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT);
 
     // MARK: Semaphore
 

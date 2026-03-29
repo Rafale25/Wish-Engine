@@ -6,7 +6,7 @@
 void Texture::create(VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags imageUsageFlags, VkImageAspectFlags viewAspectMask) {
     const Context& ctx = Context::instance();
 
-    VkImageCreateInfo imageCI{
+    imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
@@ -25,7 +25,7 @@ void Texture::create(VkFormat format, uint32_t width, uint32_t height, VkImageUs
     };
     vmaCreateImage(ctx.getVmaAllocator(), &imageCI, &allocCI, &image, &allocation, nullptr);
 
-    VkImageViewCreateInfo imageViewCI{
+    imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
@@ -36,5 +36,14 @@ void Texture::create(VkFormat format, uint32_t width, uint32_t height, VkImageUs
 }
 
 void Texture::destroy() {
-    vmaDestroyImage(Context::instance().getVmaAllocator(), image, allocation);
+    const auto& ctx = Context::instance();
+
+    vkDestroyImageView(ctx.getDevice(), imageView, nullptr);
+    vmaDestroyImage(ctx.getVmaAllocator(), image, allocation);
+
+    allocation = nullptr;
+    image = nullptr;
+    imageCI = {};
+    imageView = nullptr;
+    imageViewCI = {};
 }

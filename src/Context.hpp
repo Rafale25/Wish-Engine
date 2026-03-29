@@ -5,6 +5,7 @@
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 #include "View.hpp"
+#include "Texture.hpp"
 #include <array>
 #include <vector>
 #include <string>
@@ -38,8 +39,8 @@ public:
     VkDevice getDevice() const { return m_device; }
     VkImage getSwapchainImage() const { return m_swapchainImages[m_imageIndex]; }
     VkImageView getSwapchainImageView() const { return m_swapchainImageViews[m_imageIndex]; }
-    VkImage getDepthImage() const { return m_depthImage; }
-    VkImageView getDepthImageView() const { return m_depthImageView; }
+    VkImage getDepthImage() const { return m_depthTexture.image; }
+    VkImageView getDepthImageView() const { return m_depthTexture.imageView; }
     VkFormat getDepthImageFormat() const { return m_depthFormat; }
     uint32_t width() const { return static_cast<uint32_t>(m_framebufferWidth); };
     uint32_t height() const { return static_cast<uint32_t>(m_framebufferHeight); };
@@ -125,11 +126,11 @@ private:
     // this should be user data and not generic
     VkSwapchainCreateInfoKHR m_swapchainCI;
 
-    VmaAllocation m_depthImageAllocation;
+    Texture m_depthTexture{};
     VkFormat m_depthFormat{ VK_FORMAT_UNDEFINED };
-    VkImageCreateInfo m_depthImageCI;
-    VkImage m_depthImage;
-
-    VkImageView m_depthImageView;
-    VkImageViewCreateInfo m_depthViewCI;
+    // VmaAllocation m_depthImageAllocation;
+    // VkImageCreateInfo m_depthImageCI;
+    // VkImage m_depthImage;
+    // VkImageView m_depthImageView;
+    // VkImageViewCreateInfo m_depthViewCI;
 };
