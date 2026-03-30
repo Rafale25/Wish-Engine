@@ -30,4 +30,6 @@ private:
     Pipeline m_pipeline{};
     Buffer m_bufferVertex{};
     Buffer m_bufferIndices{};
+
+    Texture gigachad{};
 };

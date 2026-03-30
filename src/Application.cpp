@@ -13,6 +13,7 @@ struct Vertex {
 
 App::~App() {
     m_pipeline.destroy();
+    gigachad.destroy();
 }
 
 App::App() {
@@ -52,6 +53,8 @@ App::App() {
 
     m_bufferVertex.upload(vertices.data(), verticesSize);
     m_bufferIndices.upload(indices.data(), indicesSize);
+
+    gigachad.createFromFile("Gigachad.jpg");
 }
 
 void App::onUpdate(double time_since_start, float dt) {

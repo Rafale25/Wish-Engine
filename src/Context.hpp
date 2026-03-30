@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <functional>
 
 struct GLFWwindow;
 
@@ -31,6 +32,8 @@ public:
     void init();
     void run();
     void setView(View& view);
+
+    void doOneTimeCommand(std::function<void(VkCommandBuffer)>) const;
 
     const VmaAllocator& getVmaAllocator() const { return m_allocator; }
     const Slang::ComPtr<slang::ISession>& getSlangSession() const { return m_slangSession; }
@@ -55,6 +58,8 @@ private:
 
     void beginRendering();
     void endRendering();
+
+    void initOneTimeCommand();
 
     void cleanup();
 
@@ -124,6 +129,10 @@ private:
     uint32_t m_imageIndex{ 0 };
     VkCommandBuffer_T* m_currentCommandBuffer{ nullptr };
 
+    // One time commands
+    VkFence m_oneTimeFence { VK_NULL_HANDLE };
+    VkCommandBuffer m_oneTimeCommandBuffer { VK_NULL_HANDLE };
+
 
     // TODO: move everything belowout of Context
     // this should be user data and not generic
@@ -131,9 +140,4 @@ private:
 
     Texture m_depthTexture{};
     VkFormat m_depthFormat{ VK_FORMAT_UNDEFINED };
-    // VmaAllocation m_depthImageAllocation;
-    // VkImageCreateInfo m_depthImageCI;
-    // VkImage m_depthImage;
-    // VkImageView m_depthImageView;
-    // VkImageViewCreateInfo m_depthViewCI;
 };

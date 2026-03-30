@@ -105,6 +105,8 @@ void Context::cleanup() {
         vkDestroySemaphore(m_device, m_renderSemaphores[i], nullptr);
     }
 
+    vkDestroyFence(m_device, m_oneTimeFence, nullptr);
+
     for (uint32_t i = 0 ; i < maxFramesInFlight; ++i) {
         vkDestroyImageView(m_device, m_swapchainImageViews[i], nullptr);
     }
@@ -472,6 +474,9 @@ void Context::init() {
         .compilerOptionEntryCount = uint32_t(slangOptions.size())
     };
     m_slangGlobalSession->createSession(slangSessionDesc, m_slangSession.writeRef());
+
+
+    initOneTimeCommand();
 }
 
 void Context::beginRendering() {
@@ -537,4 +542,38 @@ void Context::endRendering() {
         .pImageIndices = &m_imageIndex
     };
     chkSwapchain(vkQueuePresentKHR(m_queue, &presentInfo));
+}
+
+void Context::initOneTimeCommand() {
+    VkFence fenceOneTime{};
+    VkFenceCreateInfo fenceCI{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+    };
+    chk(vkCreateFence(m_device, &fenceCI, nullptr, &m_oneTimeFence));
+
+    VkCommandBufferAllocateInfo commandBufferAI{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_commandPool,
+        .commandBufferCount = 1
+    };
+    chk(vkAllocateCommandBuffers(m_device, &commandBufferAI, &m_oneTimeCommandBuffer));
+}
+
+void Context::doOneTimeCommand(std::function<void(VkCommandBuffer)> func) const {
+    VkCommandBufferBeginInfo commandBufferBI{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+    chk(vkBeginCommandBuffer(m_oneTimeCommandBuffer, &commandBufferBI));
+
+    func(m_oneTimeCommandBuffer);
+
+    chk(vkEndCommandBuffer(m_oneTimeCommandBuffer));
+    VkSubmitInfo oneTimeSI{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_oneTimeCommandBuffer
+    };
+    chk(vkQueueSubmit(m_queue, 1, &oneTimeSI, m_oneTimeFence));
+    chk(vkWaitForFences(m_device, 1, &m_oneTimeFence, VK_TRUE, UINT64_MAX));
 }
