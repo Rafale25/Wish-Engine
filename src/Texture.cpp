@@ -74,6 +74,8 @@ void Texture::createFromFile(const char* path) {
     stagingBuffer.create(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.upload(data, dataSize);
 
+    stbi_image_free(data);
+
     const int numLevels = 1;
 
     ctx.doOneTimeCommand([&](VkCommandBuffer cb) {
