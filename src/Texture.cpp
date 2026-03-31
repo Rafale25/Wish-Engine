@@ -56,6 +56,7 @@ void Texture::createFromFile(const char* path) {
     if (r != 1)
         logE("Couldn't load file: {}", path);
 
+    // TODO: choose format depending on number of channels
     create(
         VK_FORMAT_R8G8B8A8_SRGB,
         width, height,
