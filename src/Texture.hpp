@@ -6,6 +6,7 @@
 struct Texture {
     void create(VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags imageUsageFlags, VkImageAspectFlags viewAspectMask);
     void createFromFile(const char* path);
+    void createSampler(VkFilter minFilter=VK_FILTER_LINEAR, VkFilter magFilter=VK_FILTER_LINEAR);
     void destroy();
 
     VmaAllocation allocation = nullptr;
@@ -13,5 +14,5 @@ struct Texture {
     VkImageCreateInfo imageCI{};
     VkImageView imageView = nullptr;
     VkImageViewCreateInfo imageViewCI{};
-    // VkSampler sampler = nullptr;
+    VkSampler sampler = nullptr;
 };

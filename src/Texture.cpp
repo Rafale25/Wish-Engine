@@ -36,6 +36,19 @@ void Texture::create(VkFormat format, uint32_t width, uint32_t height, VkImageUs
     vkCreateImageView(ctx.getDevice(), &imageViewCI, nullptr, &imageView);
 }
 
+void Texture::createSampler(VkFilter minFilter, VkFilter magFilter) {
+    VkSamplerCreateInfo samplerCI{
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = magFilter,
+        .minFilter = minFilter,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .anisotropyEnable = VK_TRUE,
+        .maxAnisotropy = 8.0f, // 8 is a widely supported value for max anisotropy
+        .maxLod = 1.0f, // numLevels
+    };
+    vkCreateSampler(Context::instance().getDevice(), &samplerCI, nullptr, &this->sampler);
+}
+
 void Texture::createFromFile(const char* path) {
     int32_t width, height, channels;
     int r = stbi_info(path, &width, &height, &channels);
