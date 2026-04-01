@@ -245,6 +245,8 @@ void Context::init() {
     VkDebugUtilsMessengerCreateInfoEXT logCallback = getDebugUtilsMessengerCreateInfo();
 
     if (ENABLE_VALIDATION_LAYERS) {
+        logI("Validation Layers enabled");
+
         instanceCI.pNext = &logCallback;
         instanceCI.enabledLayerCount = validationLayers.size();
         instanceCI.ppEnabledLayerNames = validationLayers.data();
@@ -311,7 +313,7 @@ void Context::init() {
         .shaderSampledImageArrayNonUniformIndexing = true,
         .descriptorBindingVariableDescriptorCount = true,
         .runtimeDescriptorArray = true,
-        .bufferDeviceAddress = true
+        .bufferDeviceAddress = true,
     };
     VkPhysicalDeviceVulkan13Features enabledVk13Features{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
