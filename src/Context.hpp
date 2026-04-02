@@ -61,6 +61,8 @@ private:
 
     void initOneTimeCommand();
 
+    void createDebugUtilsMessenger();
+    void destroyDebugUtilsMessenger();
     void cleanup();
 
     // static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -86,6 +88,7 @@ public:
         static constexpr bool ENABLE_VALIDATION_LAYERS = false;
     #else
         static constexpr bool ENABLE_VALIDATION_LAYERS = true;
+        VkDebugUtilsMessengerEXT m_logger{ nullptr };
     #endif
 
 private:

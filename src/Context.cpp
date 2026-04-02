@@ -121,6 +121,11 @@ void Context::cleanup() {
     vkDestroyCommandPool(m_device, m_commandPool, nullptr);
     vmaDestroyAllocator(m_allocator);
     vkDestroyDevice(m_device, nullptr);
+
+    if (ENABLE_VALIDATION_LAYERS) {
+        destroyDebugUtilsMessenger();
+    }
+
     vkDestroyInstance(m_instance, nullptr);
 }
 
@@ -198,17 +203,24 @@ static VkDebugUtilsMessengerCreateInfoEXT getDebugUtilsMessengerCreateInfo() {
     return createInfo;
 }
 
-// VkDebugUtilsMessengerEXT createDebugUtilsMessenger(VkInstance instance) {
-//     VkDebugUtilsMessengerEXT logger{ nullptr };
-//     PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-//     VkDebugUtilsMessengerCreateInfoEXT createInfo = getCreateInfo();
+void Context::createDebugUtilsMessenger() {
+    VkDebugUtilsMessengerEXT logger{ nullptr };
+    PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
+    VkDebugUtilsMessengerCreateInfoEXT createInfo = getDebugUtilsMessengerCreateInfo();
 
-//     if (func) {
-//         func(instance, &createInfo, NULL, &logger);
-//     }
+    if (func) {
+        func(m_instance, &createInfo, NULL, &logger);
+    }
+    m_logger = logger;
+}
 
-//     return logger;
-// }
+void Context::destroyDebugUtilsMessenger() {
+    PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT");
+
+    if (func && m_logger != NULL) {
+        func(m_instance, m_logger, NULL);
+    }
+}
 
 static std::vector<const char*> getExtensions() {
     uint32_t instanceExtensionsCount{ 0 };
@@ -242,10 +254,10 @@ void Context::init() {
         .ppEnabledExtensionNames = instanceExtensions.data(),
     };
 
-    VkDebugUtilsMessengerCreateInfoEXT logCallback = getDebugUtilsMessengerCreateInfo();
 
     if (ENABLE_VALIDATION_LAYERS) {
-        logI("Validation Layers enabled");
+        // logI("Validation Layers enabled");
+        VkDebugUtilsMessengerCreateInfoEXT logCallback = getDebugUtilsMessengerCreateInfo();
 
         instanceCI.pNext = &logCallback;
         instanceCI.enabledLayerCount = validationLayers.size();
@@ -257,6 +269,10 @@ void Context::init() {
     }
 
     chk(vkCreateInstance(&instanceCI, nullptr, &m_instance));
+
+    if (ENABLE_VALIDATION_LAYERS) {
+        createDebugUtilsMessenger();
+    }
 
     // MARK: Device count
 
