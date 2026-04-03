@@ -2,6 +2,10 @@
 #include "Logger.hpp"
 #include <GLFW/glfw3.h>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 static inline void chk(VkResult result) {
 	if (result != VK_SUCCESS) {
         logE("Vulkan call returned an error: {}", static_cast<int32_t>(result));
@@ -99,6 +103,13 @@ void Context::initWindow() {
 
 void Context::cleanup() {
     chk(vkDeviceWaitIdle(m_device));
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    vkDestroyDescriptorPool(m_device, m_imguiDescriptorPool, nullptr);
+
     for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
         vkDestroyFence(m_device, m_fences[i], nullptr);
         vkDestroySemaphore(m_device, m_presentSemaphores[i], nullptr);
@@ -110,9 +121,6 @@ void Context::cleanup() {
     for (uint32_t i = 0 ; i < maxFramesInFlight; ++i) {
         vkDestroyImageView(m_device, m_swapchainImageViews[i], nullptr);
     }
-    // vkDestroyImageView(m_device, m_depthImageView, nullptr);
-    // vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
-
     m_depthTexture.destroy();
 
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
@@ -256,7 +264,7 @@ void Context::init() {
 
 
     if (ENABLE_VALIDATION_LAYERS) {
-        // logI("Validation Layers enabled");
+        logI("Validation Layers enabled");
         VkDebugUtilsMessengerCreateInfoEXT logCallback = getDebugUtilsMessengerCreateInfo();
 
         instanceCI.pNext = &logCallback;
@@ -291,15 +299,14 @@ void Context::init() {
     vkGetPhysicalDeviceQueueFamilyProperties(m_devices[m_deviceIndex], &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(m_devices[m_deviceIndex], &queueFamilyCount, queueFamilies.data());
-    uint32_t queueFamily{ 0 };
     for (size_t i = 0; i < queueFamilies.size(); i++) {
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            queueFamily = i;
+            m_queueFamily = i;
             break;
         }
     }
 
-    if (glfwGetPhysicalDevicePresentationSupport(m_instance, m_devices[m_deviceIndex], queueFamily) == GLFW_FALSE) {
+    if (glfwGetPhysicalDevicePresentationSupport(m_instance, m_devices[m_deviceIndex], m_queueFamily) == GLFW_FALSE) {
         logE("Graphic queue doesn't support presentation.");
 		exit(-1);
     }
@@ -310,7 +317,7 @@ void Context::init() {
     constexpr float qfpriorities{ 1.0f };
     VkDeviceQueueCreateInfo queueCI{
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = queueFamily,
+        .queueFamilyIndex = m_queueFamily,
         .queueCount = 1,
         .pQueuePriorities = &qfpriorities
     };
@@ -354,7 +361,7 @@ void Context::init() {
     };
 
     chk(vkCreateDevice(m_devices[m_deviceIndex], &deviceCI, nullptr, &m_device));
-    vkGetDeviceQueue(m_device, queueFamily, 0, &m_queue);
+    vkGetDeviceQueue(m_device, m_queueFamily, 0, &m_queue);
 
 
     // MARK: VMA Allocator
@@ -460,7 +467,7 @@ void Context::init() {
     VkCommandPoolCreateInfo commandPoolCI{
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = queueFamily
+        .queueFamilyIndex = m_queueFamily
     };
     chk(vkCreateCommandPool(m_device, &commandPoolCI, nullptr, &m_commandPool));
 
@@ -493,8 +500,58 @@ void Context::init() {
     };
     m_slangGlobalSession->createSession(slangSessionDesc, m_slangSession.writeRef());
 
-
     initOneTimeCommand();
+
+    initImgui();
+}
+
+void Context::initImgui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    // VkDescriptorPool imguiDescriptorPool;
+    float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
+
+
+    VkDescriptorPoolSize poolSizes[] = {
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE }
+    };
+    VkDescriptorPoolCreateInfo poolCI{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE,
+        .poolSizeCount = 1,
+        .pPoolSizes = poolSizes
+    };
+    vkCreateDescriptorPool(m_device, &poolCI, nullptr, &m_imguiDescriptorPool);
+
+    VkPipelineRenderingCreateInfo pipelineRenderingCI{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &SWAPCHAIN_IMAGE_FORMAT
+    };
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.FontScaleDpi = main_scale;
+
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.ApiVersion = API_VERSION;
+    init_info.Instance = m_instance;
+    init_info.PhysicalDevice = m_devices[m_deviceIndex];
+    init_info.Device = m_device;
+    init_info.Queue = m_queue;
+    init_info.QueueFamily = m_queueFamily;
+    init_info.DescriptorPool = m_imguiDescriptorPool;
+    init_info.MinImageCount = 2;
+    init_info.ImageCount = m_swapchainImageCount;
+    init_info.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCI;
+    init_info.PipelineInfoMain.Subpass = 0;
+    init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.UseDynamicRendering = true;
+    ImGui_ImplVulkan_Init(&init_info);
 }
 
 void Context::beginRendering() {
@@ -513,9 +570,51 @@ void Context::beginRendering() {
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
     };
     chk(vkBeginCommandBuffer(m_currentCommandBuffer, &cbBI));
+
+    imguiBeginRendering();
+}
+
+void Context::imguiBeginRendering() {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void Context::imguiEndRendering() {
+    VkRenderingAttachmentInfo colorAttachment{
+        .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView   = getSwapchainImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .loadOp      = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp     = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue  = { .color = {{0, 0, 0, 1}} }
+    };
+
+    VkRenderingInfo renderingInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = { .extent = {
+            .width = static_cast<uint32_t>(m_framebufferWidth),
+            .height = static_cast<uint32_t>(m_framebufferHeight)
+        }},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachment
+    };
+
+    // ImGui::ShowDemoWindow();
+    ImGui::EndFrame();
+
+    ImGui::Render();
+
+    vkCmdBeginRendering(getCommandBuffer(), &renderingInfo);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), getCommandBuffer());
+    vkCmdEndRendering(getCommandBuffer());
+
 }
 
 void Context::endRendering() {
+    imguiEndRendering();
+
     VkImageMemoryBarrier2 barrierPresent{
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -535,6 +634,7 @@ void Context::endRendering() {
     vkCmdPipelineBarrier2(m_currentCommandBuffer, &barrierPresentDependencyInfo);
 
     vkEndCommandBuffer(m_currentCommandBuffer);
+
 
     VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submitInfo{

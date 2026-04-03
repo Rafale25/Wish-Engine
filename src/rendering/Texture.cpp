@@ -65,7 +65,7 @@ void Texture::createFromFile(const char* path) {
     );
 
     stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load(path, &width, &height, &channels, 4);
+    unsigned char *data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
     int32_t dataSize = width * height * 4;
 
     const auto& ctx = Context::instance();

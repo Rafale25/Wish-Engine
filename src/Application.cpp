@@ -4,6 +4,10 @@
 #include "RenderPass.hpp"
 #include <glm/ext/vector_float3.hpp>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
@@ -93,6 +97,8 @@ void App::onDraw(double time_since_start, float dt) {
         const VkDeviceSize indexCount{6};
         vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
     });
+
+    ImGui::ShowDemoWindow();
 }
 
 void App::onResize(int width, int height) {

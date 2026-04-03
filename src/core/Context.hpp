@@ -61,6 +61,10 @@ private:
     void endRendering();
 
     void initOneTimeCommand();
+    void initImgui();
+    void imguiBeginRendering();
+    void imguiEndRendering();
+
 
     void createDebugUtilsMessenger();
     void destroyDebugUtilsMessenger();
@@ -115,6 +119,8 @@ private:
     VmaAllocator m_allocator{ VK_NULL_HANDLE };
     VkCommandPool m_commandPool{ VK_NULL_HANDLE };
 
+    uint32_t m_queueFamily{ 0 };
+
     std::array<VkCommandBuffer, maxFramesInFlight> m_commandBuffers;
     std::array<VkFence, maxFramesInFlight> m_fences;
     std::array<VkSemaphore, maxFramesInFlight> m_presentSemaphores;
@@ -138,6 +144,8 @@ private:
     VkFence m_oneTimeFence { VK_NULL_HANDLE };
     VkCommandBuffer m_oneTimeCommandBuffer { VK_NULL_HANDLE };
 
+    // Imgui
+    VkDescriptorPool m_imguiDescriptorPool{ VK_NULL_HANDLE };
 
     // TODO: move everything belowout of Context
     // this should be user data and not generic

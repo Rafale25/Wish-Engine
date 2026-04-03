@@ -44,21 +44,40 @@ add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
 find_library(Slang_LIBRARY NAMES slang slang-compiler HINTS "$ENV{VULKAN_SDK}/lib" REQUIRED)
 # -- #
 
+# IMGUI #
+set(IMGUI_DIR ${THIRD_PARTY_DIR}/imgui)
+add_library(imgui STATIC)
+target_sources(imgui
+    PRIVATE
+        ${IMGUI_DIR}/imgui_demo.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+)
+target_include_directories(imgui PUBLIC ${IMGUI_DIR})
+# -- #
+
 
 include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
 
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-        ./include
-        ./src
-        ./src/core
-        ./src/rendering
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/rendering
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
+    imgui
     # ktx
     GPUOpen::VulkanMemoryAllocator
     $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
