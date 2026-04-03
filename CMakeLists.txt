@@ -28,9 +28,7 @@ add_subdirectory(${GLFW_DIR} ${CMAKE_CURRENT_BINARY_DIR}/glfw)
 set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLM_BUILD_LIBRARY ON CACHE BOOL "" FORCE)
 set(DGLM_BUILD_INSTALL ON CACHE BOOL "" FORCE)
-# add_definitions(-D GLM_ENABLE_EXPERIMENTAL) ## for GLM
 add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
-# include_directories("submodules/glm/glm")
 # -- #
 
 # VMA #
@@ -53,6 +51,9 @@ include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ./include
+        ./src
+        ./src/core
+        ./src/rendering
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
