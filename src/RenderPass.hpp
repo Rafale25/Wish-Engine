@@ -46,9 +46,16 @@ static const VkImageMemoryBarrier2 defaultDepthBarrier={
     .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, .levelCount = 1, .layerCount = 1 }
 };
 
+struct Texture;
+
 class RenderPass {
 public:
     RenderPass& setExtents(uint32_t width, uint32_t height);
+
+    RenderPass& color(
+        const Texture& texture,
+        VkRenderingAttachmentInfo attachmentInfo=defaultColorAttachmentInfo,
+        VkImageMemoryBarrier2 barrier=defaultColorBarrier);
 
     RenderPass& color(
         VkImage image, VkImageView imageView,
@@ -56,9 +63,15 @@ public:
         VkImageMemoryBarrier2 barrier=defaultColorBarrier);
 
     RenderPass& depth(
+        const Texture& texture,
+        VkRenderingAttachmentInfo attachmentInfo=defaultDepthAttachmentInfo,
+        VkImageMemoryBarrier2 barrier=defaultDepthBarrier);
+
+    RenderPass& depth(
         VkImage image, VkImageView imageView,
         VkRenderingAttachmentInfo attachmentInfo=defaultDepthAttachmentInfo,
         VkImageMemoryBarrier2 barrier=defaultDepthBarrier);
+
 
     RenderPass& defaultViewportScissor();
 

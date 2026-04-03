@@ -69,7 +69,6 @@ void Texture::createFromFile(const char* path) {
     int32_t dataSize = width * height * 4;
 
     const auto& ctx = Context::instance();
-    const auto fence = ctx.getFence();
 
     Buffer stagingBuffer;
     stagingBuffer.create(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
@@ -130,6 +129,7 @@ void Texture::destroy() {
     const auto& ctx = Context::instance();
 
     vkDestroyImageView(ctx.getDevice(), imageView, nullptr);
+    vkDestroySampler(ctx.getDevice(), sampler, nullptr);
     vmaDestroyImage(ctx.getVmaAllocator(), image, allocation);
 
     allocation = nullptr;

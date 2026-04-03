@@ -1,4 +1,5 @@
 #include "RenderPass.hpp"
+#include "Texture.hpp"
 #include "Context.hpp"
 
 RenderPass& RenderPass::setExtents(uint32_t width, uint32_t height) {
@@ -7,12 +8,20 @@ RenderPass& RenderPass::setExtents(uint32_t width, uint32_t height) {
     return *this;
 }
 
+RenderPass& RenderPass::color(const Texture& texture, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+    return color(texture.image, texture.imageView, attachmentInfo, barrier);
+}
+
 RenderPass& RenderPass::color(VkImage image, VkImageView imageView, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
     barrier.image = image;
     attachmentInfo.imageView = imageView;
     m_barriers.push_back(barrier);
     m_colorAttachments.push_back(attachmentInfo);
     return *this;
+}
+
+RenderPass& RenderPass::depth(const Texture& texture, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+    return depth(texture.image, texture.imageView, attachmentInfo, barrier);
 }
 
 RenderPass& RenderPass::depth(VkImage image, VkImageView imageView, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {

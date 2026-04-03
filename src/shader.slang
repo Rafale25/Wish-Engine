@@ -12,8 +12,7 @@ struct VSInput {
     float2 UV;
 };
 
-// Sampler2D textures[];
-
+[[vk::binding(0, 0)]] Sampler2D textures[];
 
 struct VSOutput {
     float4 Pos : SV_POSITION;
@@ -56,9 +55,9 @@ float4 main(VSOutput input, uniform ImmutablePtr<ShaderData> u) {
     // float2 uv = fract(input.UV * 4);
     // uv.x += u.time;
     // uv.y -= abs(sin(u.time * 3));
-    // float3 color = textures[0].Sample(uv).rgb;
+    float3 color = textures[0].Sample(input.UV).rgb;
 
-    float3 color = input.Color * (sin(u.time * 3.0) * 0.5 + 0.5);
+    // float3 color = input.Color * (sin(u.time * 3.0) * 0.5 + 0.5);
 
     return float4(color, 1.0);
 }

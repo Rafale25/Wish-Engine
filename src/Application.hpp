@@ -4,6 +4,7 @@
 #include "View.hpp"
 #include <vulkan/vulkan.h>
 #include <glm/ext/matrix_float4x4.hpp>
+#include "DescriptorSet.hpp"
 #include "GraphicsPipelineBuilder.hpp"
 #include "UniformBuffer.hpp"
 
@@ -32,4 +33,5 @@ private:
     Buffer m_bufferIndices{};
 
     Texture gigachad{};
+    DescriptorSet m_descriptorSet{};
 };

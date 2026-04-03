@@ -28,6 +28,7 @@ public:
     GraphicsPipelineBuilder& setDepthAttachmentFormat(VkFormat format);
     GraphicsPipelineBuilder& addVertexBinding(uint32_t binding, uint32_t stride);
     GraphicsPipelineBuilder& addVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
+    GraphicsPipelineBuilder& addDescriptorLayout(VkDescriptorSetLayout descriptorSetLayout);
     GraphicsPipelineBuilder& setTopology(VkPrimitiveTopology topology);
     GraphicsPipelineBuilder& setPolygonMode(VkPolygonMode polygonMode);
     GraphicsPipelineBuilder& setCullMode(VkCullModeFlags flags);
@@ -35,11 +36,10 @@ public:
     GraphicsPipelineBuilder& setDepthCompareOp(VkCompareOp op);
     GraphicsPipelineBuilder& setColorWriteMask(VkColorComponentFlags flags);
     GraphicsPipelineBuilder& addDynamic(VkDynamicState dynamicState);
+    // GraphicsPipelineBuilder& setRenderingInfo(VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_D32_SFLOAT);
 
     [[nodiscard]] Pipeline build();
 
-    // GraphicsPipelineBuilder& setRenderingInfo();
-    // set_rendering_info(VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_D32_SFLOAT)
 
 private:
     std::string m_moduleName;
@@ -55,10 +55,9 @@ private:
     std::vector<VkFormat> m_colorAttachmentFormats;
     VkFormat m_depthAttachmentFormat{};
 
-    // Should always add viewport and scissor
-    // VK_DYNAMIC_STATE_VIEWPORT
-    // VK_DYNAMIC_STATE_SCISSOR
     std::vector<VkDynamicState> m_dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+    VkDescriptorSetLayout m_descriptorSetLayout{ VK_NULL_HANDLE };
 
     // TODO: make so we can have multiple
     VkVertexInputBindingDescription m_vertexInputBinding{};

@@ -21,11 +21,18 @@ App::App() {
 
     m_uniformBuffer.create(sizeof(ShaderData));
 
+    gigachad.createFromFile("Gigachad.jpg");
+    gigachad.createSampler();
+
+    m_descriptorSet.create(1);
+    int32_t textureIndex = m_descriptorSet.addTexture(gigachad.sampler, gigachad.imageView);
+
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")
         .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT)
         .setDepthAttachmentFormat(ctx.getDepthImageFormat())
         .addVertexBinding(0, sizeof(Vertex))
+        .addDescriptorLayout(m_descriptorSet.getLayout())
         .addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))
         .addVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
         .addVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv))
@@ -53,8 +60,6 @@ App::App() {
 
     m_bufferVertex.upload(vertices.data(), verticesSize);
     m_bufferIndices.upload(indices.data(), indicesSize);
-
-    gigachad.createFromFile("Gigachad.jpg");
 }
 
 void App::onUpdate(double time_since_start, float dt) {
@@ -73,16 +78,18 @@ void App::onDraw(double time_since_start, float dt) {
             ctx.getSwapchainImage(),
             ctx.getSwapchainImageView())
         .depth(
-            ctx.getDepthImage(),
-            ctx.getDepthImageView());
+            ctx.getDepthTexture());
 
     pass.execute([&]() {
         vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
-        VkDeviceSize vOffset{ 0 };
-        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &vOffset);
+        m_descriptorSet.bind(cb, m_pipeline.layout);
+
+        VkDeviceSize _vOffset{ 0 };
+        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &_vOffset);
         vkCmdBindIndexBuffer(cb, m_bufferIndices.buffer, 0, VK_INDEX_TYPE_UINT16);
 
         m_uniformBuffer.pushConstant(m_pipeline.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
+
 
         const VkDeviceSize indexCount{6};
         vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);

@@ -39,6 +39,12 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::addVertexAttribute(uint32_t lo
     return *this;
 }
 
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::addDescriptorLayout(VkDescriptorSetLayout descriptorSetLayout) {
+    m_descriptorSetLayout = descriptorSetLayout;
+    return *this;
+}
+
+
 GraphicsPipelineBuilder& GraphicsPipelineBuilder::setTopology(VkPrimitiveTopology topology) {
     m_topology = topology;
     return *this;
@@ -101,11 +107,16 @@ Pipeline GraphicsPipelineBuilder::build() {
     };
     VkPipelineLayoutCreateInfo pipelineLayoutCI{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 0, // 1
-        // .pSetLayouts = &descriptorSetLayoutTex,
+        .setLayoutCount = 0,
+        .pSetLayouts = nullptr,
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &pushConstantRange
     };
+
+    if (m_descriptorSetLayout != VK_NULL_HANDLE) {
+        pipelineLayoutCI.setLayoutCount = 1,
+        pipelineLayoutCI.pSetLayouts = &m_descriptorSetLayout;
+    }
 
     VkPipelineLayout pipelineLayout{ VK_NULL_HANDLE };
     chk(vkCreatePipelineLayout(ctx.getDevice(), &pipelineLayoutCI, nullptr, &pipelineLayout));

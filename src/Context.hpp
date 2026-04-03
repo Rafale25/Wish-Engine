@@ -38,15 +38,16 @@ public:
     const VmaAllocator& getVmaAllocator() const { return m_allocator; }
     const Slang::ComPtr<slang::ISession>& getSlangSession() const { return m_slangSession; }
     VkCommandBuffer getCommandBuffer() const { return m_commandBuffers[m_frameIndex]; }
-    VkCommandPool getCommandPool() const { return m_commandPool; };
+    // VkCommandPool getCommandPool() const { return m_commandPool; };
     uint32_t getFrameIndex() const { return m_frameIndex; }
     VkDevice getDevice() const { return m_device; }
-    VkFence getFence() const { return m_fences[m_frameIndex]; }
-    VkQueue getQueue() const { return m_queue; }
+    // VkFence getFence() const { return m_fences[m_frameIndex]; }
+    // VkQueue getQueue() const { return m_queue; }
     VkImage getSwapchainImage() const { return m_swapchainImages[m_imageIndex]; }
     VkImageView getSwapchainImageView() const { return m_swapchainImageViews[m_imageIndex]; }
-    VkImage getDepthImage() const { return m_depthTexture.image; }
-    VkImageView getDepthImageView() const { return m_depthTexture.imageView; }
+    Texture getDepthTexture() const { return m_depthTexture; };
+    // VkImage getDepthImage() const { return m_depthTexture.image; }
+    // VkImageView getDepthImageView() const { return m_depthTexture.imageView; }
     VkFormat getDepthImageFormat() const { return m_depthFormat; }
     uint32_t width() const { return static_cast<uint32_t>(m_framebufferWidth); };
     uint32_t height() const { return static_cast<uint32_t>(m_framebufferHeight); };
