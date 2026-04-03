@@ -8,7 +8,7 @@ public:
     DescriptorSet() = default;
     ~DescriptorSet();
 
-    void create(uint32_t textureCount);
+    void create(uint32_t binding, uint32_t textureCount);
     int32_t addTexture(VkSampler sampler, VkImageView imageView);
     void bind(VkCommandBuffer cb, VkPipelineLayout pipelineLayout);
 

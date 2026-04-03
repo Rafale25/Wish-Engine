@@ -9,7 +9,7 @@ DescriptorSet::~DescriptorSet() {
 }
 
 
-void DescriptorSet::create(uint32_t textureCount) {
+void DescriptorSet::create(uint32_t binding, uint32_t textureCount) {
     const Context& ctx = Context::instance();
 
     VkDescriptorBindingFlags descVariableFlag{ VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT };
@@ -19,6 +19,7 @@ void DescriptorSet::create(uint32_t textureCount) {
         .pBindingFlags = &descVariableFlag
     };
     VkDescriptorSetLayoutBinding descLayoutBinding{
+        .binding = binding,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = textureCount,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT

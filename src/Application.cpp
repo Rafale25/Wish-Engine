@@ -24,7 +24,7 @@ App::App() {
     gigachad.createFromFile("Gigachad.jpg");
     gigachad.createSampler();
 
-    m_descriptorSet.create(1);
+    m_descriptorSet.create(0, 1);
     int32_t textureIndex = m_descriptorSet.addTexture(gigachad.sampler, gigachad.imageView);
 
     m_pipeline = GraphicsPipelineBuilder{}
