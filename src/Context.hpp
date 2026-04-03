@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 #include "View.hpp"
@@ -89,7 +89,6 @@ public:
         static constexpr bool ENABLE_VALIDATION_LAYERS = false;
     #else
         static constexpr bool ENABLE_VALIDATION_LAYERS = true;
-        VkDebugUtilsMessengerEXT m_logger{ nullptr };
     #endif
 
 private:
@@ -97,6 +96,8 @@ private:
     DefaultView m_defaultView;
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
+
+    VkDebugUtilsMessengerEXT m_logger{ nullptr };
 
     const std::vector<char const*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"

@@ -6,7 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #define VMA_IMPLEMENTATION
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 
 #include "stb_image.h"
 

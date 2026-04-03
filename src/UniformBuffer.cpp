@@ -1,5 +1,5 @@
 #include "UniformBuffer.hpp"
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 
 void UniformBuffer::create(VkDeviceSize size) {
     for (uint32_t i = 0; i < Context::maxFramesInFlight; ++i) {
