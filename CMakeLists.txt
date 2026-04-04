@@ -20,7 +20,7 @@ set(GLFW_DIR ${THIRD_PARTY_DIR}/glfw)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-include_directories(${GLFW_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${GLFW_DIR}/include)
 add_subdirectory(${GLFW_DIR} ${CMAKE_CURRENT_BINARY_DIR}/glfw)
 # -- #
 
@@ -32,7 +32,8 @@ add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
 # -- #
 
 # VMA #
-include_directories(${THIRD_PARTY_DIR}/VMA/include)
+# marked as SYSTEM to suppress warnings
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${THIRD_PARTY_DIR}/VMA/include)
 add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
 # -- #
 
@@ -61,7 +62,8 @@ target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 # -- #
 
 
-include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
+# include_directories(SYSTEM $ENV{VULKAN_SDK}/Include)
+find_package(Vulkan REQUIRED)
 
 
 target_include_directories(${PROJECT_NAME}
@@ -75,13 +77,16 @@ target_include_directories(${PROJECT_NAME}
         ${IMGUI_DIR}/backends
 )
 
+target_link_libraries(imgui PUBLIC Vulkan::Vulkan glfw)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
     imgui
     # ktx
     GPUOpen::VulkanMemoryAllocator
-    $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    # $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    Vulkan::Vulkan
     ${Slang_LIBRARY}
 )
 
