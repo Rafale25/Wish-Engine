@@ -33,6 +33,10 @@ public:
     void run();
     void setView(View& view);
 
+    bool isKeyDown(int32_t key) const;
+    // bool isKeyPressed() const;
+    // bool isKeyReleased() const;
+
     void doOneTimeCommand(std::function<void(VkCommandBuffer)>) const;
 
     const VmaAllocator& getVmaAllocator() const { return m_allocator; }
@@ -70,9 +74,9 @@ private:
     void destroyDebugUtilsMessenger();
     void cleanup();
 
-    // static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    // static void cursorPositionCallback(GLFWwindow* window, double x, double y);
-    // static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void cursorPositionCallback(GLFWwindow* window, double x, double y);
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     // static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
     // static void cursorEnterCallback(GLFWwindow* window, int entered);
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -100,6 +104,10 @@ private:
     DefaultView m_defaultView;
     View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
+
+    int32_t m_keystate[512] = {0}; // GLFW_LAST_KEY iS 348 but I glfw is included only in cpp implementation file (so we take 512 to be safe)
+    int32_t m_mouseX = 0, m_mouseY = 0;
+
 
     VkDebugUtilsMessengerEXT m_logger{ nullptr };
 

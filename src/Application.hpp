@@ -7,6 +7,7 @@
 #include "DescriptorSet.hpp"
 #include "GraphicsPipelineBuilder.hpp"
 #include "UniformBuffer.hpp"
+#include "CameraFps.hpp"
 
 class Buffer;
 
@@ -34,4 +35,6 @@ private:
 
     Texture gigachad{};
     DescriptorSet m_descriptorSet{};
+
+    FPSCamera m_camera{};
 };

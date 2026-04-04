@@ -70,6 +70,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/core
         ${CMAKE_CURRENT_SOURCE_DIR}/src/rendering
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/camera
         ${IMGUI_DIR}
         ${IMGUI_DIR}/backends
 )

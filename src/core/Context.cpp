@@ -29,6 +29,36 @@ Context::~Context() {
     glfwTerminate();
 }
 
+void Context::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    Context* ctx = (Context*)glfwGetWindowUserPointer(window);
+
+    if (key >= 0 && key < GLFW_KEY_LAST) {
+        ctx->m_keystate[key] = action > 0 ? 1 : 0;
+    }
+}
+
+void Context::cursorPositionCallback(GLFWwindow* window, double x, double y)
+{
+    Context* ctx = (Context*)glfwGetWindowUserPointer(window);
+
+    float dx = x - ctx->m_mouseX;
+    float dy = y - ctx->m_mouseY;
+
+    ctx->m_mouseX = x;
+    ctx->m_mouseY = y;
+}
+
+// void Context::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+// {
+//     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
+
+//     if (action == GLFW_PRESS)
+//         ctx->m_currentView->onMousePress(ctx->m_mouseX, ctx->m_mouseY, button);
+//     else if (action == GLFW_RELEASE)
+//         ctx->m_currentView->onMouseRelease(ctx->m_mouseX, ctx->m_mouseY, button);
+// }
+
 void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
 
@@ -47,6 +77,19 @@ void Context::setView(View& view) {
     glfwGetFramebufferSize(window, &m_framebufferWidth, &m_framebufferHeight);
     framebufferSizeCallback(window, m_framebufferWidth, m_framebufferHeight);
 }
+
+bool Context::isKeyDown(int32_t key) const {
+    return m_keystate[GLFW_KEY_D] == GLFW_KEY_DOWN;
+}
+
+// bool Context::isKeyPressed() const {
+//     // TODO: implement that
+//     return false;
+// }
+
+// bool Context::isKeyReleased() const {
+// }
+
 
 void Context::run() {
     double startTime = glfwGetTime();
@@ -93,6 +136,9 @@ void Context::initWindow() {
 		exit(-1);
     }
 
+    glfwSetKeyCallback(window, keyCallback);
+    // glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
     // User pointer to Context

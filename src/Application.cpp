@@ -63,6 +63,11 @@ App::App() {
 
     m_bufferVertex.upload(vertices.data(), verticesSize);
     m_bufferIndices.upload(indices.data(), indicesSize);
+
+    m_camera = {
+        glm::vec3(0.0f, 0.0, 0.0f), 0.0f, 0.0f,
+        60.0f, (float)ctx.width() / (float)ctx.height(), 0.1f, 5000.0f
+    };
 }
 
 void App::onUpdate(double time_since_start, float dt) {
