@@ -22,6 +22,13 @@ struct std::formatter<T>
     }
 };
 
+// Detect broken std::print on MinGW
+#if defined(__GNUC__) && defined(__MINGW32__) && !defined(__clang__)
+    #include <format>
+    #include <iostream>
+    #define USE_COUT_FALLBACK
+#endif
+
 #define _LOG_TIME_FORMAT "{:%H:%M:%S}"
 #define NO_CHRONO_CURRENT_ZONE
 
@@ -34,9 +41,18 @@ struct std::formatter<T>
 #endif
 
 #ifdef NO_CHRONO_CURRENT_ZONE
-    #define _log(x, color, level, ...)  (std::print("\033[" color "m[" level "] " x "\033[0m\n", ##__VA_ARGS__))
+    #ifdef USE_COUT_FALLBACK
+        #define _log(x, color, level, ...)  (std::cout << std::format("\033[" color "m[" level "] " x "\033[0m\n", ##__VA_ARGS__))
+    #else
+        #define _log(x, color, level, ...)  (std::print("\033[" color "m[" level "] " x "\033[0m\n", ##__VA_ARGS__))
+    #endif
+
 #else
-    #define _log(x, color, level, ...)  (std::print("\033[95m[" _LOG_TIME_FORMAT "]\033[0m " "\033[" color "m[" level "] " x "\033[0m\n", _LOG_CHRONO, ##__VA_ARGS__))
+    #ifdef USE_COUT_FALLBACK
+        #define _log(x, color, level, ...)  (std::cout << std::format("\033[95m[" _LOG_TIME_FORMAT "]\033[0m " "\033[" color "m[" level "] " x "\033[0m\n", _LOG_CHRONO, ##__VA_ARGS__))
+    #else
+        #define _log(x, color, level, ...)  (std::print("\033[95m[" _LOG_TIME_FORMAT "]\033[0m " "\033[" color "m[" level "] " x "\033[0m\n", _LOG_CHRONO, ##__VA_ARGS__))
+    #endif
 #endif
 
 

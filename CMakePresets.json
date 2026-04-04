@@ -20,6 +20,28 @@
             }
         },
         {
+            "name": "gcc-debug",
+            "displayName": "GCC Debug",
+            "inherits": "conf-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_CXX_FLAGS": "$env{BASE_CMAKE_CXX_FLAGS} -Wshadow=local -g3 -fno-omit-frame-pointer"
+            }
+        },
+        {
+            "name": "gcc-release",
+            "displayName": "GCC Release",
+            "inherits": "conf-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_CXX_FLAGS": "$env{BASE_CMAKE_CXX_FLAGS} -O3"
+            }
+        },
+        {
             "name": "clang-debug",
             "displayName": "Clang Debug",
             "inherits": "conf-common",
