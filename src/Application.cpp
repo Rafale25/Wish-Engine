@@ -5,8 +5,6 @@
 #include <glm/ext/vector_float3.hpp>
 
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
 
 struct Vertex {
     glm::vec3 pos;

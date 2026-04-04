@@ -98,5 +98,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "./"
-    # GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
