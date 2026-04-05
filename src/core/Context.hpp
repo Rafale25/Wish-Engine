@@ -34,6 +34,8 @@ public:
     void setView(View& view);
 
     bool isKeyDown(int32_t key) const;
+    // bool isKeyDown(int32_t key) const;
+    // void getMousePositionDelta(float& dx, float& dy);
     // bool isKeyPressed() const;
     // bool isKeyReleased() const;
 
@@ -106,8 +108,10 @@ private:
     std::string applicationName = "Vulkan Application";
 
     int32_t m_keystate[512] = {0}; // GLFW_LAST_KEY iS 348 but I glfw is included only in cpp implementation file (so we take 512 to be safe)
-    int32_t m_mouseX = 0, m_mouseY = 0;
-
+    int32_t m_mouseX = 0;
+    int32_t m_mouseY = 0;
+    float m_mouseDeltaX = 0.0f;
+    float m_mouseDeltaY = 0.0f;
 
     VkDebugUtilsMessengerEXT m_logger{ nullptr };
 

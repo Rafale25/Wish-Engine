@@ -2,8 +2,9 @@
 #include "Application.hpp"
 #include "UniformBuffer.hpp"
 #include "RenderPass.hpp"
+#include "Logger.hpp"
 #include <glm/ext/vector_float3.hpp>
-
+#include <GLFW/glfw3.h>
 #include "imgui.h"
 
 struct Vertex {
@@ -43,10 +44,10 @@ App::App() {
 
     const VkDeviceSize indexCount{6};
     std::vector<Vertex> vertices{
-        {{-1,  1, 0}, {1, 0, 0}, {0, 0}},
-        {{ 1,  1, 0}, {0, 1, 0}, {1, 0}},
-        {{-1, -1, 0}, {0, 0, 1}, {0, 1}},
-        {{ 1, -1, 0}, {0, 1, 1}, {1, 1}},
+        {{-1,  1, -5}, {1, 0, 0}, {0, 0}},
+        {{ 1,  1, -5}, {0, 1, 0}, {1, 0}},
+        {{-1, -1, -5}, {0, 0, 1}, {0, 1}},
+        {{ 1, -1, -5}, {0, 1, 1}, {1, 1}},
     };
     std::vector<uint16_t> indices{
         0, 1, 2,
@@ -63,12 +64,30 @@ App::App() {
     m_bufferIndices.upload(indices.data(), indicesSize);
 
     m_camera = {
-        glm::vec3(0.0f, 0.0, 0.0f), 0.0f, 0.0f,
-        60.0f, (float)ctx.width() / (float)ctx.height(), 0.1f, 5000.0f
+        glm::vec3(0.0f, 0.0f, 0.0f), -glm::pi<float>()/2.0f, 0.0f,
+        60.0f, (float)ctx.width() / (float)ctx.height(), 0.1f, 500.0f
     };
+
 }
 
 void App::onUpdate(double time_since_start, float dt) {
+    const Context& ctx = Context::instance();
+
+    m_camera.update(dt);
+
+    glm::vec3 delta = {
+        ctx.isKeyDown(GLFW_KEY_A)            - ctx.isKeyDown(GLFW_KEY_D),
+        ctx.isKeyDown(GLFW_KEY_LEFT_CONTROL) - ctx.isKeyDown(GLFW_KEY_SPACE),
+        ctx.isKeyDown(GLFW_KEY_W)            - ctx.isKeyDown(GLFW_KEY_S)
+    };
+    glm::vec3 forwardXZ = glm::normalize(glm::vec3(m_camera.forward().x, 0.0f, m_camera.forward().z));
+    glm::vec3 moveVector = -delta.x * m_camera.right() + delta.z * forwardXZ;
+    m_camera.setPosition(m_camera.getPosition() + moveVector * dt);
+
+    m_shaderData.projection = m_camera.getProjection();
+    m_shaderData.view = m_camera.getView();
+    m_shaderData.viewPosition = glm::vec4(m_camera.getPosition(), 0);
+    m_shaderData.viewDirection = glm::vec4(m_camera.forward(), 0);
     m_shaderData.time = time_since_start;
 }
 
@@ -104,6 +123,24 @@ void App::onDraw(double time_since_start, float dt) {
     ImGui::ShowDemoWindow();
 }
 
-void App::onResize(int width, int height) {
+void App::onKeyPress(int key) {
+    const auto& ctx = Context::instance();
 
+    if (key == GLFW_KEY_C && !ImGui::GetIO().WantCaptureKeyboard) {
+        m_cursorEnabled = !m_cursorEnabled;
+
+        if (m_cursorEnabled)
+            glfwSetInputMode(ctx.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        else
+            glfwSetInputMode(ctx.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+}
+
+void App::onMouseMotion(int x, int y, int dx, int dy) {
+    if (!m_cursorEnabled)
+        m_camera.onMouseMotion(x, y, dx, dy);
+}
+
+void App::onResize(int width, int height) {
+    m_camera.aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 }

@@ -14,6 +14,8 @@ class Buffer;
 struct ShaderData {
     glm::mat4 projection{1.0f};
     glm::mat4 view{1.0f};
+    glm::vec4 viewPosition{0.0f};
+    glm::vec4 viewDirection{0.0f};
     float time{0.0f};
 };
 
@@ -26,6 +28,9 @@ public:
     void onDraw(double time_since_start, float dt);
     void onResize(int width, int height);
 
+    void onKeyPress(int key);
+    void onMouseMotion(int x, int y, int dx, int dy);
+
 private:
     UniformBuffer m_uniformBuffer{};
     ShaderData m_shaderData{};
@@ -37,4 +42,7 @@ private:
     DescriptorSet m_descriptorSet{};
 
     FPSCamera m_camera{};
+
+    // TODO: move that to Context
+    bool m_cursorEnabled = false;
 };

@@ -56,7 +56,7 @@ void FPSCamera::move(const glm::vec3& direction)
 void FPSCamera::onMouseMotion(int x, int y, int dx, int dy)
 {
     m_yaw += (float)dx * m_mouseSensitivity; // TODO: Do modulo on this value
-    m_pitch += -(float)dy * m_mouseSensitivity;
+    m_pitch += (float)dy * m_mouseSensitivity;
 
     const float epsilon = 0.001f;
     m_pitch = glm::clamp(m_pitch, (float)-(glm::pi<float>() / 2.0) + epsilon, (float)(glm::pi<float>() / 2.0) - epsilon);

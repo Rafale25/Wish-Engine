@@ -36,17 +36,28 @@ void Context::keyCallback(GLFWwindow* window, int key, int scancode, int action,
     if (key >= 0 && key < GLFW_KEY_LAST) {
         ctx->m_keystate[key] = action > 0 ? 1 : 0;
     }
+
+    if (action == GLFW_PRESS)
+        ctx->m_currentView->onKeyPress(key);
+    else if (action == GLFW_RELEASE)
+        ctx->m_currentView->onKeyRelease(key);
 }
 
 void Context::cursorPositionCallback(GLFWwindow* window, double x, double y)
 {
     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
 
-    float dx = x - ctx->m_mouseX;
-    float dy = y - ctx->m_mouseY;
+    ctx->m_mouseDeltaX = x - ctx->m_mouseX;
+    ctx->m_mouseDeltaY = y - ctx->m_mouseY;
+
+    ctx->m_currentView->onMouseMotion(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
 
     ctx->m_mouseX = x;
     ctx->m_mouseY = y;
+
+    // if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    //     ctx->m_currentView->onMouseDrag(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
+    // }
 }
 
 // void Context::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -79,7 +90,7 @@ void Context::setView(View& view) {
 }
 
 bool Context::isKeyDown(int32_t key) const {
-    return m_keystate[GLFW_KEY_D] == GLFW_KEY_DOWN;
+    return m_keystate[key] == 1;
 }
 
 // bool Context::isKeyPressed() const {

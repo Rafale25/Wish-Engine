@@ -24,25 +24,26 @@ struct VSOutput {
 struct ShaderData {
     float4x4 projection;
     float4x4 view;
+    float4 viewPosition;
+    float4 viewDirection;
     float time;
 };
 
 // struct PushConstants {
 //     ShaderData *u;
 // };
-
 // [[vk::push_constant]] uniform PushConstants pushConstant;
-
 // property u : ShaderData {
 //     get { return *pushConstant.u; }
 // }
 
 [shader("vertex")]
-VSOutput main(VSInput input, uint instanceIndex : SV_VulkanInstanceID) {
+VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u, uint instanceIndex : SV_VulkanInstanceID) {
 // VSOutput main(VSInput input, uint instanceIndex: SV_VulkanInstanceID) {
     VSOutput output;
 
-    output.Pos = float4(input.Pos.xyz, 1.0);
+    output.Pos = u.projection * u.view * float4(input.Pos.xyz, 1.0);
+    // output.Pos = mul(u.projection, mul(u.view, float4(input.Pos.xyz, 1.0)));
     output.Color = input.Color;
     output.UV = input.UV;
 
