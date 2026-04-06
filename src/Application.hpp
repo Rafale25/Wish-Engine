@@ -44,5 +44,5 @@ private:
     FPSCamera m_camera{};
 
     // TODO: move that to Context
-    bool m_cursorEnabled = false;
+    bool m_cursorEnabled = true;
 };
