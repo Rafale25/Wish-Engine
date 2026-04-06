@@ -77,6 +77,7 @@ void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
     ctx->m_framebufferWidth = width;
     ctx->m_framebufferHeight = height;
+    ctx->m_currentView->onResize(width, height);
 }
 
 void Context::setView(View& view) {
