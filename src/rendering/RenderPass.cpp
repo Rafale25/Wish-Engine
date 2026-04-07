@@ -65,6 +65,8 @@ void RenderPass::beginRendering() {
 
     if (doDefaultViewportScissor) {
         VkViewport vp{
+            .x = 0.0f,
+            .y = 0.0f, //static_cast<float>(ctx.height()),  // Start at bottom
             .width = static_cast<float>(ctx.width()),
             .height = static_cast<float>(ctx.height()),
             .minDepth = 0.0f,

@@ -5,8 +5,8 @@
 class Camera {
     public:
         Camera() {}
-        Camera(float fov, float aspect_ratio, float near_plane, float far_plane, bool reversedZ_enabled=false):
-            fov(fov), aspectRatio(aspect_ratio), nearPlane(near_plane), farPlane(far_plane)
+        Camera(float fov, float aspect_ratio, float nearPlane, float farPlane, bool reversedZEnabled=false):
+            fov(fov), aspectRatio(aspect_ratio), nearPlane(nearPlane), farPlane(farPlane)
         {}
 
         virtual ~Camera() = default;

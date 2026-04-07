@@ -91,8 +91,29 @@ void Context::setView(View& view) {
 }
 
 bool Context::isKeyDown(int32_t key) const {
-    return m_keystate[key] == 1;
+    return m_keystate[key] == GLFW_PRESS;
 }
+
+void Context::setCursorEnabled(bool enabled) {
+    glfwSetInputMode(window, GLFW_CURSOR, enabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+
+    // Fix mouse pos jumping when disabling it causing big delta between previous and new pos
+    if (!enabled) {
+        double x{}, y{};
+        glfwGetCursorPos(window, &x, &y);
+        m_mouseX = x;
+        m_mouseY = y;
+    }
+}
+
+bool Context::isCursorEnabled() const {
+    return glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+}
+
+void Context::toggleCursor() {
+    setCursorEnabled(!isCursorEnabled());
+}
+
 
 // bool Context::isKeyPressed() const {
 //     // TODO: implement that

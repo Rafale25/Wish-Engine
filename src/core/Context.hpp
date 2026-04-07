@@ -38,6 +38,11 @@ public:
     // void getMousePositionDelta(float& dx, float& dy);
     // bool isKeyPressed() const;
     // bool isKeyReleased() const;
+    bool isCursorEnabled() const;
+    void setCursorEnabled(bool enabled);
+    void toggleCursor();
+
+    float aspectRatio() const { return (float)m_framebufferWidth / (float)m_framebufferHeight; }
 
     void doOneTimeCommand(std::function<void(VkCommandBuffer)>) const;
 
@@ -112,6 +117,7 @@ private:
     int32_t m_mouseY = 0;
     float m_mouseDeltaX = 0.0f;
     float m_mouseDeltaY = 0.0f;
+    bool m_skipNextMouseDelta = false;
 
     VkDebugUtilsMessengerEXT m_logger{ nullptr };
 

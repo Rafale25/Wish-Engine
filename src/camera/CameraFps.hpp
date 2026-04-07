@@ -2,18 +2,31 @@
 
 #include "Camera.hpp"
 
+struct CameraFpsCreateInfo {
+    float aspect_ratio = 16.0f/9.0f;
+    float fov = 60.0f;
+    float yaw = 0.0f;
+    float pitch = 0.0f;
+    const glm::vec3& position = {0.0f, 0.0f, 0.0f};
+    float nearPlane = 0.1f;
+    float farPlane = 1000.0f;
+    bool reversedZ_enabled = false;
+    bool isScreenYInverted = false;
+};
+
 class FPSCamera: public Camera {
 public:
     FPSCamera() {}
-    FPSCamera(const glm::vec3& position, float yaw, float pitch, float fov, float aspect_ratio, float near_plane, float far_plane, bool reversedZ_enabled=false):
-        Camera(fov, aspect_ratio, near_plane, far_plane, reversedZ_enabled),
-        m_position(position),
-        m_yaw(yaw),
-        m_pitch(pitch)
+    FPSCamera(CameraFpsCreateInfo ci):
+        Camera(ci.fov, ci.aspect_ratio, ci.nearPlane, ci.farPlane, ci.reversedZ_enabled),
+        m_position(ci.position),
+        m_yaw(ci.yaw),
+        m_pitch(ci.pitch),
+        m_isScreenYInverted(ci.isScreenYInverted)
     {
-        m_smoothPosition = position;
-        m_smoothYaw = yaw;
-        m_smoothPitch = pitch;
+        m_smoothPosition = ci.position;
+        m_smoothYaw = ci.yaw;
+        m_smoothPitch = ci.pitch;
     }
 
     glm::mat4 getView() const;
@@ -21,7 +34,6 @@ public:
     glm::vec3 right() const;
     glm::vec3 up() const;
     glm::vec3 forward() const;
-
 
     float getYaw() const;
     float getPitch() const;
@@ -55,4 +67,6 @@ private:
     glm::vec3 m_up = {0.0, 1.0, 0.0};
     glm::vec3 m_right = {1.0, 0.0, 0.0};
     glm::vec3 m_forward = {0.0, 0.0, 1.0};
+
+    bool m_isScreenYInverted = false;
 };

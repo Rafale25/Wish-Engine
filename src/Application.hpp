@@ -42,7 +42,4 @@ private:
     DescriptorSet m_descriptorSet{};
 
     FPSCamera m_camera{};
-
-    // TODO: move that to Context
-    bool m_cursorEnabled = true;
 };

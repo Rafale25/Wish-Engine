@@ -13,5 +13,7 @@
 
 glm::mat4 Camera::getProjection() const {
     // if (reversedZEnabled) return MakeInfReversedZProjRH(glm::radians(fov), aspectRatio, nearPlane);
-    return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+    auto proj = glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+    // proj[1][1] *= -1.0f;
+    return proj;
 }

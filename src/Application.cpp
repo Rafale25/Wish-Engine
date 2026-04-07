@@ -48,6 +48,11 @@ App::App() {
         {{ 1,  1, -5}, {0, 1, 0}, {1, 0}},
         {{-1, -1, -5}, {0, 0, 1}, {0, 1}},
         {{ 1, -1, -5}, {0, 1, 1}, {1, 1}},
+
+        // {{-1, -1, -5}, {1, 0, 0}, {0, 0}},
+        // {{ 1, -1, -5}, {0, 1, 0}, {1, 0}},
+        // {{-1,  1, -5}, {0, 0, 1}, {0, 1}},
+        // {{ 1,  1, -5}, {0, 1, 1}, {1, 1}},
     };
     std::vector<uint16_t> indices{
         0, 1, 2,
@@ -63,11 +68,14 @@ App::App() {
     m_bufferVertex.upload(vertices.data(), verticesSize);
     m_bufferIndices.upload(indices.data(), indicesSize);
 
-    m_camera = {
-        glm::vec3(0.0f, 0.0f, 0.0f), -glm::pi<float>()/2.0f, 0.0f,
-        60.0f, (float)ctx.width() / (float)ctx.height(), 0.1f, 500.0f
-    };
-
+    m_camera = { CameraFpsCreateInfo{
+        .aspect_ratio= ctx.aspectRatio(),
+        .fov = 70.0f,
+        .yaw = -glm::pi<float>()/2.0f,
+        .nearPlane=0.1,
+        .farPlane=1000.0,
+        .isScreenYInverted = true
+    }};
 }
 
 void App::onUpdate(double time_since_start, float dt) {
@@ -80,9 +88,9 @@ void App::onUpdate(double time_since_start, float dt) {
         ctx.isKeyDown(GLFW_KEY_LEFT_CONTROL) - ctx.isKeyDown(GLFW_KEY_SPACE),
         ctx.isKeyDown(GLFW_KEY_W)            - ctx.isKeyDown(GLFW_KEY_S)
     };
-    glm::vec3 forwardXZ = glm::normalize(glm::vec3(m_camera.forward().x, 0.0f, m_camera.forward().z));
-    glm::vec3 moveVector = -delta.x * m_camera.right() + delta.z * forwardXZ;
-    m_camera.setPosition(m_camera.getPosition() + moveVector * dt);
+    if (!ctx.isCursorEnabled() && !ImGui::GetIO().WantCaptureKeyboard)
+        m_camera.move(delta);
+
 
     m_shaderData.projection = m_camera.getProjection();
     m_shaderData.view = m_camera.getView();
@@ -124,20 +132,15 @@ void App::onDraw(double time_since_start, float dt) {
 }
 
 void App::onKeyPress(int key) {
-    const auto& ctx = Context::instance();
+    auto& ctx = Context::instance();
 
     if (key == GLFW_KEY_C && !ImGui::GetIO().WantCaptureKeyboard) {
-        m_cursorEnabled = !m_cursorEnabled;
-
-        if (m_cursorEnabled)
-            glfwSetInputMode(ctx.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        else
-            glfwSetInputMode(ctx.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        ctx.toggleCursor();
     }
 }
 
 void App::onMouseMotion(int x, int y, int dx, int dy) {
-    if (!m_cursorEnabled)
+    if (!Context::instance().isCursorEnabled())
         m_camera.onMouseMotion(x, y, dx, dy);
 }
 
