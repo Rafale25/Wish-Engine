@@ -4,14 +4,27 @@
 #include <vector>
 #include <functional>
 
-static const VkRenderingAttachmentInfo defaultColorAttachmentInfo {
-    .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    .imageView = nullptr,
-    .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    .clearValue{.color{ {0.0f, 0.0f, 0.0f, 1.0f} }}
+struct ColorAttachmentInfo {
+    VkAttachmentLoadOp   loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    VkAttachmentStoreOp  storeOp{ VK_ATTACHMENT_STORE_OP_STORE };
+    VkClearColorValue    clearValue{ {0.0f, 0.0f, 0.0f, 1.0f} };
 };
+
+struct DepthAttachmentInfo {
+    VkAttachmentLoadOp       loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    VkAttachmentStoreOp      storeOp{ VK_ATTACHMENT_STORE_OP_STORE };
+    VkClearValue             clearValue{ .depthStencil{1.0f,  0} };
+};
+
+// static const VkRenderingAttachmentInfo defaultColorAttachmentInfo {
+//     .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+//     .imageView = nullptr,
+//     .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+//     // .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+//     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+//     .clearValue{.color{ {0.0f, 0.0f, 0.0f, 1.0f} }}
+// };
 
 static const VkImageMemoryBarrier2 defaultColorBarrier{
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -25,14 +38,15 @@ static const VkImageMemoryBarrier2 defaultColorBarrier{
     .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
 };
 
-static const VkRenderingAttachmentInfo defaultDepthAttachmentInfo{
-    .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    .imageView = nullptr,
-    .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-    .clearValue = {.depthStencil = {1.0f,  0}}
-};
+// static const VkRenderingAttachmentInfo defaultDepthAttachmentInfo{
+//     .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+//     .imageView = nullptr,
+//     .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+//     .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//     // .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+//     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+//     .clearValue = {.depthStencil = {1.0f,  0}}
+// };
 
 static const VkImageMemoryBarrier2 defaultDepthBarrier={
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -54,22 +68,22 @@ public:
 
     RenderPass& color(
         const Texture& texture,
-        VkRenderingAttachmentInfo attachmentInfo=defaultColorAttachmentInfo,
+        ColorAttachmentInfo colorAttachmentInfo={},
         VkImageMemoryBarrier2 barrier=defaultColorBarrier);
 
     RenderPass& color(
         VkImage image, VkImageView imageView,
-        VkRenderingAttachmentInfo attachmentInfo=defaultColorAttachmentInfo,
+        ColorAttachmentInfo colorAttachmentInfo={},
         VkImageMemoryBarrier2 barrier=defaultColorBarrier);
 
     RenderPass& depth(
         const Texture& texture,
-        VkRenderingAttachmentInfo attachmentInfo=defaultDepthAttachmentInfo,
+        DepthAttachmentInfo attachmentInfo={},
         VkImageMemoryBarrier2 barrier=defaultDepthBarrier);
 
     RenderPass& depth(
         VkImage image, VkImageView imageView,
-        VkRenderingAttachmentInfo attachmentInfo=defaultDepthAttachmentInfo,
+        DepthAttachmentInfo attachmentInfo={},
         VkImageMemoryBarrier2 barrier=defaultDepthBarrier);
 
 

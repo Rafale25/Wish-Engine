@@ -8,27 +8,46 @@ RenderPass& RenderPass::setExtents(uint32_t width, uint32_t height) {
     return *this;
 }
 
-RenderPass& RenderPass::color(const Texture& texture, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+RenderPass& RenderPass::color(const Texture& texture, ColorAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
     return color(texture.image, texture.imageView, attachmentInfo, barrier);
 }
 
-RenderPass& RenderPass::color(VkImage image, VkImageView imageView, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+RenderPass& RenderPass::color(VkImage image, VkImageView imageView, ColorAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
     barrier.image = image;
-    attachmentInfo.imageView = imageView;
+
+    VkRenderingAttachmentInfo renderingAttachmentInfo {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .pNext = nullptr,
+        .imageView = imageView,
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .loadOp = attachmentInfo.loadOp,
+        .storeOp = attachmentInfo.storeOp,
+        .clearValue = { attachmentInfo.clearValue }
+    };
+
+    m_colorAttachments.push_back(renderingAttachmentInfo);
     m_barriers.push_back(barrier);
-    m_colorAttachments.push_back(attachmentInfo);
     return *this;
 }
 
-RenderPass& RenderPass::depth(const Texture& texture, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+RenderPass& RenderPass::depth(const Texture& texture, DepthAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
     return depth(texture.image, texture.imageView, attachmentInfo, barrier);
 }
 
-RenderPass& RenderPass::depth(VkImage image, VkImageView imageView, VkRenderingAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
+RenderPass& RenderPass::depth(VkImage image, VkImageView imageView, DepthAttachmentInfo attachmentInfo, VkImageMemoryBarrier2 barrier) {
     barrier.image = image;
-    attachmentInfo.imageView = imageView;
+
+    VkRenderingAttachmentInfo depthAttachmentInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = imageView,
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .loadOp = attachmentInfo.loadOp,
+        .storeOp = attachmentInfo.storeOp,
+        .clearValue = attachmentInfo.clearValue
+    };
+
     m_barriers.push_back(barrier);
-    m_depthAttachment = attachmentInfo;
+    m_depthAttachment = depthAttachmentInfo;
     return *this;
 }
 

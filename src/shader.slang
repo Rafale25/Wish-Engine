@@ -1,3 +1,4 @@
+// TODO: move this into it's own file
 float4 operator*(float4x4 a, float4 b) {
     return mul(a, b);
 }

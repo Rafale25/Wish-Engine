@@ -2,7 +2,9 @@
 #include "Application.hpp"
 #include "UniformBuffer.hpp"
 #include "RenderPass.hpp"
+#include "GraphicsPipelineBuilder.hpp"
 #include "Logger.hpp"
+#include "debugdraw/DebugDraw.hpp"
 #include <glm/ext/vector_float3.hpp>
 #include <GLFW/glfw3.h>
 #include "imgui.h"
@@ -109,9 +111,11 @@ void App::onDraw(double time_since_start, float dt) {
         .defaultViewportScissor()
         .color(
             ctx.getSwapchainImage(),
-            ctx.getSwapchainImageView())
+            ctx.getSwapchainImageView(),
+            { .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR })
         .depth(
-            ctx.getDepthTexture());
+            ctx.getDepthTexture(),
+            { .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR });
 
     pass.execute([&]() {
         vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
@@ -127,6 +131,9 @@ void App::onDraw(double time_since_start, float dt) {
         const VkDeviceSize indexCount{6};
         vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
     });
+
+    DebugDraw::instance().drawCube({0, 0, 0});
+    DebugDraw::instance().drawAndFlush(cb, m_shaderData.projection * m_shaderData.view);
 
     ImGui::ShowDemoWindow();
 }

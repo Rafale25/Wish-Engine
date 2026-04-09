@@ -1,24 +1,11 @@
 #pragma once
 
+#include "Pipeline.hpp"
 #include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
 
-#include "Context.hpp"
-
 class Context;
-
-struct Pipeline {
-    void destroy() {
-        const auto device = Context::instance().getDevice();
-        vkDeviceWaitIdle(device);
-        vkDestroyPipeline(device, pipeline, nullptr);
-        vkDestroyPipelineLayout(device, layout, nullptr);
-    }
-
-    VkPipeline pipeline{ VK_NULL_HANDLE };
-    VkPipelineLayout layout{ VK_NULL_HANDLE };
-};
 
 class GraphicsPipelineBuilder {
 public:

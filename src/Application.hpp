@@ -2,12 +2,12 @@
 
 #include "Buffer.hpp"
 #include "View.hpp"
-#include <vulkan/vulkan.h>
-#include <glm/ext/matrix_float4x4.hpp>
 #include "DescriptorSet.hpp"
-#include "GraphicsPipelineBuilder.hpp"
 #include "UniformBuffer.hpp"
 #include "CameraFps.hpp"
+#include "Pipeline.hpp"
+#include <glm/ext/matrix_float4x4.hpp>
+#include <vulkan/vulkan.h>
 
 class Buffer;
 

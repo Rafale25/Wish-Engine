@@ -407,7 +407,9 @@ void Context::init() {
     };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{
-        .samplerAnisotropy = VK_TRUE
+        .fillModeNonSolid = VK_TRUE,
+        .wideLines = VK_TRUE,
+        .samplerAnisotropy = VK_TRUE,
     };
     VkPhysicalDeviceVulkan12Features enabledVk12Features{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
