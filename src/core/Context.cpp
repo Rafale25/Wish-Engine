@@ -572,12 +572,17 @@ void Context::init() {
         slang::CompilerOptionName::EmitSpirvDirectly,
         {slang::CompilerOptionValueKind::Int, 1}
     } })};
+
+    // TODO: should probably not be hardcoded
+    const std::vector<const char*> searchPaths = { "./src/shaders" };
     slang::SessionDesc slangSessionDesc{
         .targets = slangTargets.data(),
         .targetCount = SlangInt(slangTargets.size()),
         .defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
+        .searchPaths = searchPaths.data(),
+        .searchPathCount = static_cast<SlangInt>(searchPaths.size()),
         .compilerOptionEntries = slangOptions.data(),
-        .compilerOptionEntryCount = uint32_t(slangOptions.size())
+        .compilerOptionEntryCount = static_cast<uint32_t>(slangOptions.size()),
     };
     m_slangGlobalSession->createSession(slangSessionDesc, m_slangSession.writeRef());
 

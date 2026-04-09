@@ -93,7 +93,6 @@ void App::onUpdate(double time_since_start, float dt) {
     if (!ctx.isCursorEnabled() && !ImGui::GetIO().WantCaptureKeyboard)
         m_camera.move(delta);
 
-
     m_shaderData.projection = m_camera.getProjection();
     m_shaderData.view = m_camera.getView();
     m_shaderData.viewPosition = glm::vec4(m_camera.getPosition(), 0);

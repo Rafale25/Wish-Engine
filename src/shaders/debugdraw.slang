@@ -1,10 +1,5 @@
-float4 operator*(float4x4 a, float4 b) {
-    return mul(a, b);
-}
-
-float4x4 operator*(float4x4 a, float4x4 b) {
-    return mul(a, b);
-}
+import packing;
+import glsl_operators_overload;
 
 struct VSInput {
     float3 pos;
@@ -13,15 +8,12 @@ struct VSInput {
 
 struct VSOutput {
     float4 pos : SV_POSITION;
-    // nointerpolation int color;
-    float3 color;
+    nointerpolation int color;
 };
 
 struct ShaderData {
     float4x4 viewProjection;
 };
-
-import packing;
 
 [shader("vertex")]
 VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u) {
@@ -29,15 +21,12 @@ VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u) {
 
     VSOutput output;
     output.pos = pos;
-    output.color = unpackColor(input.color);//input.color;
+    output.color = input.color;
 
     return output;
 }
 
 [shader("fragment")]
 float4 main(VSOutput input, uniform ImmutablePtr<ShaderData> u) {
-    return float4(input.color, 1.0);
-    // return float4(unpackColor(input.color), 1.0);
-
-    // FragColor = vec4(unpackColor(v_color), 1.0);
+    return float4(unpackColor(input.color), 1.0);
 }
