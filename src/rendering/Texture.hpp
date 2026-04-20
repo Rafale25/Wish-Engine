@@ -5,7 +5,9 @@
 
 struct Texture {
     void create(VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags imageUsageFlags, VkImageAspectFlags viewAspectMask);
+    void createCubemap(VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags imageUsageFlags, VkImageAspectFlags viewAspectMask);
     void createFromFile(const char* path);
+    void createFromFileCubemap(const char* path[6]);
     void createSampler(VkFilter minFilter=VK_FILTER_LINEAR, VkFilter magFilter=VK_FILTER_LINEAR);
     void destroy();
 

@@ -75,6 +75,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/src/camera
         ${CMAKE_CURRENT_SOURCE_DIR}/src/debugdraw
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/geometry
         ${IMGUI_DIR}
         ${IMGUI_DIR}/backends
 )

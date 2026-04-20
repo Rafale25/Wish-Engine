@@ -21,3 +21,9 @@ void UniformBuffer::pushConstant(VkPipelineLayout pipelineLayout, VkShaderStageF
         0, sizeof(VkDeviceAddress),
         &m_shaderDataBuffers[ctx.getFrameIndex()].deviceAddress);
 }
+
+// void UniformBuffer::destroy() {
+    // for (auto& buffer: m_shaderDataBuffers) {
+    //     buffer.destroy();
+    // }
+// }
