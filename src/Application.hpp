@@ -34,12 +34,17 @@ public:
 private:
     UniformBuffer m_uniformBuffer{};
     ShaderData m_shaderData{};
+    Pipeline m_pipelineSkybox{};
     Pipeline m_pipeline{};
     Buffer m_bufferVertex{};
     Buffer m_bufferIndices{};
 
+    Buffer m_cubemapBufferVertex{};
+
     Texture gigachad{};
+    Texture m_cubemap{};
     DescriptorSet m_descriptorSet{};
+    DescriptorSet m_descriptorSetCubemap{};
 
     FPSCamera m_camera{};
 };

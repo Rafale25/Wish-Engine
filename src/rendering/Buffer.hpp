@@ -6,14 +6,17 @@
 class Buffer {
 public:
     Buffer() = default;
+    // ~Buffer() = default;
     ~Buffer() { destroy(); };
 
     void create(VkDeviceSize size, VkBufferUsageFlags usage);
-    void upload(const void *data, size_t size);
-    void destroy();
+    void upload(const void *data, size_t size, size_t offset=0);
     VkDeviceSize size() const;
 
-public:
+private:
+    void destroy();
+
+    public:
     VkBuffer buffer{ VK_NULL_HANDLE };
     VmaAllocation allocation{ VK_NULL_HANDLE };
     VmaAllocationInfo allocationInfo{};

@@ -4,6 +4,7 @@
 #include "RenderPass.hpp"
 #include "GraphicsPipelineBuilder.hpp"
 #include "Logger.hpp"
+#include "geometry.hpp"
 #include "debugdraw/DebugDraw.hpp"
 #include <glm/ext/vector_float3.hpp>
 #include <GLFW/glfw3.h>
@@ -17,7 +18,9 @@ struct Vertex {
 
 App::~App() {
     m_pipeline.destroy();
+    m_pipelineSkybox.destroy();
     gigachad.destroy();
+    m_cubemap.destroy();
 }
 
 App::App() {
@@ -28,8 +31,41 @@ App::App() {
     gigachad.createFromFile("Gigachad.jpg");
     gigachad.createSampler();
 
+    const char* paths[6] = {
+        "./src/skybox/back.jpg",
+        "./src/skybox/bottom.jpg",
+        "./src/skybox/front.jpg",
+        "./src/skybox/left.jpg",
+        "./src/skybox/right.jpg",
+        "./src/skybox/top.jpg"
+    };
+
+    m_cubemap.createFromFileCubemap(paths);
+    m_cubemap.createSampler();
+
+    m_descriptorSetCubemap.create(0, 1);
+    m_descriptorSetCubemap.addTexture(m_cubemap.sampler, m_cubemap.imageView);
+
     m_descriptorSet.create(0, 1);
-    int32_t textureIndex = m_descriptorSet.addTexture(gigachad.sampler, gigachad.imageView);
+    int32_t _textureIndex = m_descriptorSet.addTexture(gigachad.sampler, gigachad.imageView);
+
+    // TODO:
+    // - make the cubemap geometry (use Geometry class from minecraft-clone)
+    // - finish skybox.slang shader
+    // - ...
+
+    Geometry::cube(m_cubemapBufferVertex, glm::vec3(100.0f), glm::vec3(0.0f));
+
+    m_pipelineSkybox = GraphicsPipelineBuilder{}
+        .setShaders("skybox", "./src/skybox.slang")
+        .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT)
+        .setDepthAttachmentFormat(ctx.getDepthImageFormat())
+        .addVertexBinding(0, sizeof(float) * 3)
+        .addDescriptorLayout(m_descriptorSetCubemap.getLayout())
+        .addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+        .setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .setPolygonMode(VK_POLYGON_MODE_FILL)
+        .build();
 
     m_pipeline = GraphicsPipelineBuilder{}
         .setShaders("triangle", "./src/shader.slang")

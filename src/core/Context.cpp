@@ -780,4 +780,5 @@ void Context::doOneTimeCommand(std::function<void(VkCommandBuffer)> func) const 
     };
     chk(vkQueueSubmit(m_queue, 1, &oneTimeSI, m_oneTimeFence));
     chk(vkWaitForFences(m_device, 1, &m_oneTimeFence, VK_TRUE, UINT64_MAX));
+    chk(vkResetFences(m_device, 1, &m_oneTimeFence));
 }

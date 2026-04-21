@@ -2,6 +2,8 @@
 #include "Context.hpp"
 
 void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
+    assert(buffer == VK_NULL_HANDLE);
+
     const auto& ctx = Context::instance();
 
     VkBufferCreateInfo bufferCI{
@@ -28,14 +30,16 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
     deviceAddress = vkGetBufferDeviceAddress(ctx.getDevice(), &uBufferBdaInfo);
 }
 
-void Buffer::upload(const void *data, size_t size) {
-    memcpy(allocationInfo.pMappedData, data, size);
+void Buffer::upload(const void *data, size_t size, size_t offset) {
+    memcpy(static_cast<char*>(allocationInfo.pMappedData) + offset, data, size);
 }
 
 void Buffer::destroy() {
-    vkDeviceWaitIdle(Context::instance().getDevice());
+    const auto& ctx = Context::instance();
+
+    vkDeviceWaitIdle(ctx.getDevice());
     vmaDestroyBuffer(
-        Context::instance().getVmaAllocator(),
+        ctx.getVmaAllocator(),
         buffer,
         allocation);
 

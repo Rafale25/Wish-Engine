@@ -10,6 +10,7 @@ public:
     void create(VkDeviceSize size);
     void upload(const void* data, size_t size);
     void pushConstant(VkPipelineLayout pipelineLayout, VkShaderStageFlagBits shaderStages);
+    // void destroy();
 
 private:
     std::array<Buffer, Context::maxFramesInFlight> m_shaderDataBuffers;
