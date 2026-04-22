@@ -146,8 +146,8 @@ void Texture::createFromFile(const char* path) {
 
         VkImageMemoryBarrier2 barrierTexRead{
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
-            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
@@ -164,8 +164,10 @@ void Texture::createFromFileCubemap(const char* path[6]) {
     int32_t width, height, channels;
     int r = stbi_info(path[0], &width, &height, &channels);
 
-    if (r != 1)
+    if (r != 1) {
         logE("Couldn't load file: {}", path[0]);
+        exit(-1);
+    }
 
     // TODO: choose format depending on number of channels
     createCubemap(
@@ -175,7 +177,7 @@ void Texture::createFromFileCubemap(const char* path[6]) {
         VK_IMAGE_ASPECT_COLOR_BIT
     );
 
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
 
     Buffer stagingBuffer;
     int32_t dataSize = width * height * 4;
@@ -200,7 +202,7 @@ void Texture::createFromFileCubemap(const char* path[6]) {
             .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
             .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             .image = this->image,
             .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = numLevels, .layerCount = layerCount }
         };
@@ -213,35 +215,35 @@ void Texture::createFromFileCubemap(const char* path[6]) {
 
         std::vector<VkBufferImageCopy> copyRegions{};
         for (uint32_t face = 0 ; face < 6 ; ++face) {
-            for (uint32_t i = 0; i < numLevels; ++i) {
-                VkDeviceSize offset = 0;
+            for (uint32_t level = 0; level < numLevels; ++level) {
+                VkDeviceSize offset = dataSize * face;
                 copyRegions.push_back({
                     .bufferOffset = offset,
                     .imageSubresource{
                         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                        .mipLevel = (uint32_t)i,
+                        .mipLevel = (uint32_t)level,
                         .baseArrayLayer = face,
                         .layerCount = 1
                     },
                     .imageExtent{
-                        .width = static_cast<uint32_t>(width) >> i,
-                        .height = static_cast<uint32_t>(height) >> i,
+                        .width = static_cast<uint32_t>(width) >> level,
+                        .height = static_cast<uint32_t>(height) >> level,
                         .depth = 1
                     },
                 });
             }
         }
 
-        vkCmdCopyBufferToImage(cb, stagingBuffer.buffer, this->image, VK_IMAGE_LAYOUT_GENERAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+        vkCmdCopyBufferToImage(cb, stagingBuffer.buffer, this->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
 
         VkImageMemoryBarrier2 barrierTexRead{
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
-            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
-            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .image = this->image,
             .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = numLevels, .layerCount = layerCount }
         };
@@ -251,6 +253,9 @@ void Texture::createFromFileCubemap(const char* path[6]) {
 }
 
 void Texture::destroy() {
+    if (image == nullptr)
+        return;
+
     const auto& ctx = Context::instance();
 
     vkDestroyImageView(ctx.getDevice(), imageView, nullptr);

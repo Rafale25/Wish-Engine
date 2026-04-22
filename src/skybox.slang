@@ -23,7 +23,6 @@ struct ShaderData {
 };
 
 [[vk::binding(0, 0)]] SamplerCube samplerCubemap;
-// SamplerCube samplerCubeMap;
 
 [shader("vertex")]
 VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u) {
@@ -42,5 +41,5 @@ VSOutput main(VSInput input, uniform ImmutablePtr<ShaderData> u) {
 
 [shader("fragment")]
 float4 main(VSOutput input) {
-    return samplerCubeMap.Sample(input.UVW);
+    return samplerCubemap.Sample(input.UVW);
 }

@@ -1,5 +1,7 @@
 #include "Buffer.hpp"
 #include "Context.hpp"
+#include "Logger.hpp"
+#include <cstring>
 
 void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
     assert(buffer == VK_NULL_HANDLE);
@@ -35,9 +37,14 @@ void Buffer::upload(const void *data, size_t size, size_t offset) {
 }
 
 void Buffer::destroy() {
+    if (buffer == VK_NULL_HANDLE)
+        return;
+
+    logD("Buffer destroy");
+
     const auto& ctx = Context::instance();
 
-    vkDeviceWaitIdle(ctx.getDevice());
+    // vkDeviceWaitIdle(ctx.getDevice());
     vmaDestroyBuffer(
         ctx.getVmaAllocator(),
         buffer,
@@ -46,6 +53,7 @@ void Buffer::destroy() {
     buffer = VK_NULL_HANDLE;
     allocation = VK_NULL_HANDLE;
     allocationInfo = {};
+    deviceAddress = 0;
 }
 
 VkDeviceSize Buffer::size() const {

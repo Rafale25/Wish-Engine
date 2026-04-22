@@ -1,5 +1,6 @@
 #include "UniformBuffer.hpp"
 #include <vk_mem_alloc.h>
+#include <cstring>
 
 void UniformBuffer::create(VkDeviceSize size) {
     for (uint32_t i = 0; i < Context::maxFramesInFlight; ++i) {

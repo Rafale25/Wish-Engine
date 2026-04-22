@@ -32,12 +32,12 @@ App::App() {
     gigachad.createSampler();
 
     const char* paths[6] = {
-        "./src/skybox/back.jpg",
-        "./src/skybox/bottom.jpg",
-        "./src/skybox/front.jpg",
-        "./src/skybox/left.jpg",
-        "./src/skybox/right.jpg",
-        "./src/skybox/top.jpg"
+        "./src/skybox/right.jpg",   // +X
+        "./src/skybox/left.jpg",    // -X
+        "./src/skybox/top.jpg",     // +Y
+        "./src/skybox/bottom.jpg",  // -Y
+        "./src/skybox/front.jpg",   // +Z
+        "./src/skybox/back.jpg",    // -2
     };
 
     m_cubemap.createFromFileCubemap(paths);
@@ -49,10 +49,6 @@ App::App() {
     m_descriptorSet.create(0, 1);
     int32_t _textureIndex = m_descriptorSet.addTexture(gigachad.sampler, gigachad.imageView);
 
-    // TODO:
-    // - make the cubemap geometry (use Geometry class from minecraft-clone)
-    // - finish skybox.slang shader
-    // - ...
 
     Geometry::cube(m_cubemapBufferVertex, glm::vec3(100.0f), glm::vec3(0.0f));
 
@@ -153,18 +149,34 @@ void App::onDraw(double time_since_start, float dt) {
             { .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR });
 
     pass.execute([&]() {
-        vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
-        m_descriptorSet.bind(cb, m_pipeline.layout);
-
         VkDeviceSize _vOffset{ 0 };
-        vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &_vOffset);
-        vkCmdBindIndexBuffer(cb, m_bufferIndices.buffer, 0, VK_INDEX_TYPE_UINT16);
 
-        m_uniformBuffer.pushConstant(m_pipeline.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
+        {
+            // Cubemap
+            vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineSkybox.pipeline);
+            m_descriptorSetCubemap.bind(cb, m_pipelineSkybox.layout);
+
+            vkCmdBindVertexBuffers(cb, 0, 1, &m_cubemapBufferVertex.buffer, &_vOffset);
+            m_uniformBuffer.pushConstant(m_pipelineSkybox.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
+
+            const VkDeviceSize vertexCount{6*6};
+            vkCmdDraw(cb, vertexCount, 1, 0, 0);
+        }
+
+        {
+            // quad image
+            vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.pipeline);
+            m_descriptorSet.bind(cb, m_pipeline.layout);
+
+            vkCmdBindVertexBuffers(cb, 0, 1, &m_bufferVertex.buffer, &_vOffset);
+            vkCmdBindIndexBuffer(cb, m_bufferIndices.buffer, 0, VK_INDEX_TYPE_UINT16);
+
+            m_uniformBuffer.pushConstant(m_pipeline.layout, VkShaderStageFlagBits(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
 
 
-        const VkDeviceSize indexCount{6};
-        vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
+            const VkDeviceSize indexCount{6};
+            vkCmdDrawIndexed(cb, indexCount, 1, 0, 0, 0);
+        }
     });
 
     DebugDraw::instance().drawCube({0, 0, 0});
