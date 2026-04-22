@@ -144,7 +144,6 @@ void Context::run() {
         m_currentView->onDraw(m_timeSinceStart, deltaTime);
         endRendering();
 
-        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
