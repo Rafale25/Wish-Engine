@@ -648,7 +648,7 @@ void Context::initImgui() {
     init_info.Queue = m_queue;
     init_info.QueueFamily = m_queueFamily;
     init_info.DescriptorPool = m_imguiDescriptorPool;
-    init_info.MinImageCount = m_surfaceCaps.minImageCount;
+    init_info.MinImageCount = 2;
     init_info.ImageCount = m_swapchainImageCount;
     init_info.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCI;
     init_info.PipelineInfoMain.Subpass = 0;
