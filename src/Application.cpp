@@ -27,8 +27,8 @@ App::App() {
     const Context& ctx = Context::instance();
 
     m_uniformBuffer.create(sizeof(ShaderData));
-
     gigachad.createFromFile("Gigachad.jpg");
+
     gigachad.createSampler();
 
     const char* paths[6] = {
@@ -147,6 +147,7 @@ void App::onDraw(double time_since_start, float dt) {
         .depth(
             ctx.getDepthTexture(),
             { .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR });
+
 
     pass.execute([&]() {
         VkDeviceSize _vOffset{ 0 };

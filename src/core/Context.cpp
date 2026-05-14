@@ -318,6 +318,13 @@ static std::vector<const char*> getExtensions() {
         instanceExtensionsVector.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
+#ifdef __APPLE__
+    instanceExtensionsVector.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    // Required by VK_KHR_portability_subset at device-creation time; many loaders
+    // also want it at instance level. Safe to always include on Apple.
+    instanceExtensionsVector.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+#endif
+
     return instanceExtensionsVector;
 }
 
@@ -335,6 +342,9 @@ void Context::init() {
 
     VkInstanceCreateInfo instanceCI{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+#ifdef __APPLE__
+        .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+#endif
         .pApplicationInfo = &appInfo,
         .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
         .ppEnabledExtensionNames = instanceExtensions.data(),
@@ -402,12 +412,15 @@ void Context::init() {
 
     const std::vector<const char*> deviceExtensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME,
+#ifdef __APPLE__
+        "VK_KHR_portability_subset" // VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
+#endif
+        // VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME, // not supported by MoltenVK
     };
 
     const VkPhysicalDeviceFeatures enabledVk10Features{
         .fillModeNonSolid = VK_TRUE,
-        .wideLines = VK_TRUE,
+        // .wideLines = VK_TRUE,
         .samplerAnisotropy = VK_TRUE,
     };
     VkPhysicalDeviceVulkan12Features enabledVk12Features{
@@ -670,7 +683,7 @@ void Context::imguiEndRendering() {
         .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
         .imageView   = getSwapchainImageView(),
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-        .loadOp      = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD,//VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .storeOp     = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue  = { .color = {{0, 0, 0, 1}} }
     };

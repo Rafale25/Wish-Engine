@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
-#include <slang/slang.h>
-#include <slang/slang-com-ptr.h>
+#include <slang.h>
+#include <slang-com-ptr.h>
 #include "View.hpp"
 #include "Texture.hpp"
 #include <array>

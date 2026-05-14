@@ -42,7 +42,10 @@ add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
 # -- #
 
 # Slang #
-find_library(Slang_LIBRARY NAMES slang slang-compiler HINTS "$ENV{VULKAN_SDK}/lib" REQUIRED)
+find_package(slang CONFIG REQUIRED)
+
+# target_include_directories(${PROJECT_NAME} PRIVATE ${Slang_INCLUDE_DIR})
+# find_library(Slang_LIBRARY NAMES slang slang-compiler HINTS "$ENV{VULKAN_SDK}/lib" REQUIRED)
 # -- #
 
 # IMGUI #
@@ -86,11 +89,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
     imgui
-    # ktx
     GPUOpen::VulkanMemoryAllocator
-    # $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
     Vulkan::Vulkan
-    ${Slang_LIBRARY}
+    slang::slang
+    # ktx
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE

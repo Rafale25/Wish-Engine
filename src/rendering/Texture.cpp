@@ -88,8 +88,10 @@ void Texture::createFromFile(const char* path) {
     int32_t width, height, channels;
     int r = stbi_info(path, &width, &height, &channels);
 
-    if (r != 1)
+    if (r != 1) {
         logE("Couldn't load file: {}", path);
+        exit(-1);
+    }
 
     // TODO: choose format depending on number of channels
     create(
@@ -121,7 +123,7 @@ void Texture::createFromFile(const char* path) {
             .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
             .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             .image = this->image,
             .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = numLevels, .layerCount = 1 }
         };
@@ -142,7 +144,7 @@ void Texture::createFromFile(const char* path) {
                 .imageExtent{.width = static_cast<uint32_t>(width) >> i, .height = static_cast<uint32_t>(height) >> i, .depth = 1 },
             });
         }
-        vkCmdCopyBufferToImage(cb, stagingBuffer.buffer, this->image, VK_IMAGE_LAYOUT_GENERAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+        vkCmdCopyBufferToImage(cb, stagingBuffer.buffer, this->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
 
         VkImageMemoryBarrier2 barrierTexRead{
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -150,8 +152,8 @@ void Texture::createFromFile(const char* path) {
             .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
-            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .image = this->image,
             .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = numLevels, .layerCount = 1 }
         };

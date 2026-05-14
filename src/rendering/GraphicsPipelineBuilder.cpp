@@ -1,8 +1,8 @@
 #include "GraphicsPipelineBuilder.hpp"
 #include "Context.hpp"
 #include "Logger.hpp"
-#include <slang/slang.h>
-#include <slang/slang-com-ptr.h>
+#include <slang.h>
+#include <slang-com-ptr.h>
 
 static inline void chk(VkResult result) {
 	if (result != VK_SUCCESS) {
@@ -191,7 +191,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     VkPipelineRasterizationStateCreateInfo rasterizationState{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = m_polygonMode,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .cullMode = m_cullMode,
         .frontFace = m_frontFace,
         .lineWidth = 1.0f,
     };

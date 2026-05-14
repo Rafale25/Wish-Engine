@@ -26,8 +26,9 @@ DebugDraw::DebugDraw() {
         .addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DebugDrawVertex, pos))
         .addVertexAttribute(1, 0, VK_FORMAT_R32_SINT,         offsetof(DebugDrawVertex, color))
         .setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-        .setPolygonMode(VK_POLYGON_MODE_LINE)
-        .addDynamic(VK_DYNAMIC_STATE_LINE_WIDTH)
+        .setCullMode(VK_CULL_MODE_NONE)
+        // .setPolygonMode(VK_POLYGON_MODE_LINE)
+        // .addDynamic(VK_DYNAMIC_STATE_LINE_WIDTH)
         .build();
 }
 
@@ -150,7 +151,7 @@ void DebugDraw::draw(VkCommandBuffer cb, const glm::mat4& view_projection) {
 
         VkDeviceSize _vOffset{ 0 };
         vkCmdBindVertexBuffers(cb, 0, 1, &m_vertexBuffer.buffer, &_vOffset);
-        vkCmdSetLineWidth(cb, 1.0f);
+        // vkCmdSetLineWidth(cb, 1.0f);
 
         vkCmdDraw(cb, vertexCount, 1, 0, 0);
     });

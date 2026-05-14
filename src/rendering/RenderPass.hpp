@@ -5,13 +5,15 @@
 #include <functional>
 
 struct ColorAttachmentInfo {
-    VkAttachmentLoadOp   loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    // VkAttachmentLoadOp   loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    VkAttachmentLoadOp   loadOp{VK_ATTACHMENT_LOAD_OP_LOAD };
     VkAttachmentStoreOp  storeOp{ VK_ATTACHMENT_STORE_OP_STORE };
     VkClearColorValue    clearValue{ {0.0f, 0.0f, 0.0f, 1.0f} };
 };
 
 struct DepthAttachmentInfo {
-    VkAttachmentLoadOp       loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    // VkAttachmentLoadOp       loadOp{ VK_ATTACHMENT_LOAD_OP_DONT_CARE };
+    VkAttachmentLoadOp       loadOp{ VK_ATTACHMENT_LOAD_OP_LOAD }; // for Metal
     VkAttachmentStoreOp      storeOp{ VK_ATTACHMENT_STORE_OP_STORE };
     VkClearValue             clearValue{ .depthStencil{1.0f,  0} };
 };

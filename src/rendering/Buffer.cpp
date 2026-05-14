@@ -15,7 +15,9 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
     };
 
     VmaAllocationCreateInfo bufferAllocCI{
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+            //    | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT
+               | VMA_ALLOCATION_CREATE_MAPPED_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO
     };
     vmaCreateBuffer(
@@ -33,6 +35,7 @@ void Buffer::create(VkDeviceSize size, VkBufferUsageFlags usage) {
 }
 
 void Buffer::upload(const void *data, size_t size, size_t offset) {
+    assert(allocationInfo.pMappedData != nullptr  && "Buffer is not host-mapped, was it created with HOST_ACCESS_* flags?");
     memcpy(static_cast<char*>(allocationInfo.pMappedData) + offset, data, size);
 }
 
