@@ -487,11 +487,16 @@ void Context::init() {
         };
 	}
 
+    uint32_t requestedImageCount = std::max(m_surfaceCaps.minImageCount, 2u);
+    if (m_surfaceCaps.maxImageCount > 0) {
+        requestedImageCount = std::min(requestedImageCount, m_surfaceCaps.maxImageCount);
+    }
+
     // MARK: Swapchain
     m_swapchainCI = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = m_surface,
-        .minImageCount = m_surfaceCaps.minImageCount,
+        .minImageCount = requestedImageCount, //m_surfaceCaps.minImageCount,
         .imageFormat = SWAPCHAIN_IMAGE_FORMAT,
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent{ .width = swapchainExtent.width, .height = swapchainExtent.height },
@@ -643,7 +648,7 @@ void Context::initImgui() {
     init_info.Queue = m_queue;
     init_info.QueueFamily = m_queueFamily;
     init_info.DescriptorPool = m_imguiDescriptorPool;
-    init_info.MinImageCount = 2;
+    init_info.MinImageCount = m_surfaceCaps.minImageCount;
     init_info.ImageCount = m_swapchainImageCount;
     init_info.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCI;
     init_info.PipelineInfoMain.Subpass = 0;
