@@ -85,8 +85,15 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::addDynamic(VkDynamicState dyna
     return *this;
 }
 
+#include <filesystem>
+
 Pipeline GraphicsPipelineBuilder::build() {
     const Context& ctx = Context::instance();
+
+    if (!std::filesystem::exists(m_shaderPath.c_str())) {
+        logE("{} does not exist!", m_shaderPath);
+        exit(-1);
+    }
 
     Slang::ComPtr<slang::IModule> slangModule{
         ctx.getSlangSession()->loadModuleFromSource(m_moduleName.c_str(), m_shaderPath.c_str(), nullptr, nullptr)
