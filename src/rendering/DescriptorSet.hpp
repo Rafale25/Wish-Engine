@@ -3,6 +3,8 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+struct Texture;
+
 class DescriptorSet {
 public:
     DescriptorSet() = default;
@@ -10,6 +12,7 @@ public:
 
     void create(uint32_t binding, uint32_t textureCount);
     int32_t addTexture(VkSampler sampler, VkImageView imageView);
+    int32_t addTexture(const Texture& texture);
     void bind(VkCommandBuffer cb, VkPipelineLayout pipelineLayout);
 
     VkDescriptorSetLayout getLayout() const { return m_descriptorSetLayout; }

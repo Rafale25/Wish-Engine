@@ -63,6 +63,10 @@ void DescriptorSet::create(uint32_t binding, uint32_t textureCount) {
     vkAllocateDescriptorSets(ctx.getDevice(), &descSetAlloc, &m_descriptorSet);
 }
 
+int32_t DescriptorSet::addTexture(const Texture& texture) {
+    return addTexture(texture.sampler, texture.imageView);
+}
+
 int32_t DescriptorSet::addTexture(VkSampler sampler, VkImageView imageView) {
     m_imageDescriptors.push_back({
         .sampler = sampler,
