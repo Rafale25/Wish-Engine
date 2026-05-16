@@ -10,7 +10,6 @@ struct CameraFpsCreateInfo {
     const glm::vec3& position = {0.0f, 0.0f, 0.0f};
     float nearPlane = 0.1f;
     float farPlane = 1000.0f;
-    bool reversedZ_enabled = false;
     bool isScreenYInverted = false;
 };
 
@@ -18,7 +17,7 @@ class FPSCamera: public Camera {
 public:
     FPSCamera() {}
     FPSCamera(CameraFpsCreateInfo ci):
-        Camera(ci.fov, ci.aspect_ratio, ci.nearPlane, ci.farPlane, ci.reversedZ_enabled),
+        Camera(ci.fov, ci.aspect_ratio, ci.nearPlane, ci.farPlane),
         m_position(ci.position),
         m_yaw(ci.yaw),
         m_pitch(ci.pitch),
@@ -29,6 +28,7 @@ public:
         m_smoothPitch = ci.pitch;
     }
 
+    glm::mat4 getProjection() const;
     glm::mat4 getView() const;
 
     glm::vec3 right() const;

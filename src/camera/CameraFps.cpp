@@ -3,6 +3,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/common.hpp>
 
+glm::mat4 FPSCamera::getProjection() const {
+    auto proj = glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+    return proj;
+}
+
 glm::mat4 FPSCamera::getView() const {
     return glm::lookAt(m_smoothPosition, m_smoothPosition + m_forward, m_worldUp);
 }
