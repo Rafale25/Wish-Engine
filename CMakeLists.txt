@@ -11,7 +11,7 @@ file(GLOB_RECURSE SRC_C CONFIGURE_DEPENDS ./src/*.c)
 file(GLOB_RECURSE SRC_CPP CONFIGURE_DEPENDS ./src/*.cpp)
 file(GLOB_RECURSE SRC_HEADERS CONFIGURE_DEPENDS ./src/*.hpp)
 
-add_executable(${PROJECT_NAME} ${SRC_CPP} ${SRC_C} ${SRC_HEADERS})
+add_library(${PROJECT_NAME} ${SRC_CPP} ${SRC_C} ${SRC_HEADERS})
 
 set(THIRD_PARTY_DIR ./submodules/)
 
@@ -70,7 +70,7 @@ find_package(Vulkan REQUIRED)
 
 
 target_include_directories(${PROJECT_NAME}
-    PRIVATE
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/core
@@ -85,7 +85,7 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(imgui PUBLIC Vulkan::Vulkan glfw)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PUBLIC
     glfw
     glm
     imgui
@@ -95,12 +95,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     # ktx
 )
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     GLFW_INCLUDE_NONE
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "./"
-)
+# set_target_properties(${PROJECT_NAME} PROPERTIES
+#     RUNTIME_OUTPUT_DIRECTORY "./"
+# )
