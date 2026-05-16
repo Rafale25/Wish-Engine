@@ -3,8 +3,7 @@
 #include <glm/common.hpp>
 
 glm::mat4 Camera2D::getProjection() const {
-    auto proj = glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
-    return proj;
+    return glm::ortho(m_left, m_right, m_bottom, m_top);
 }
 
 glm::mat4 Camera2D::getView() const {
