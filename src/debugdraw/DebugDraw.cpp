@@ -19,7 +19,7 @@ DebugDraw::DebugDraw() {
     m_vertexBuffer.create(initial_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
     m_pipeline = GraphicsPipelineBuilder{}
-        .setShaders("debugDraw", "./src/shaders/debugdraw.slang")
+        .setShaders("debugDraw", "libs/WishEngine/src/shaders/debugdraw.slang")// "./src/shaders/debugdraw.slang")
         .addColorAttachmentFormat(Context::SWAPCHAIN_IMAGE_FORMAT)
         .setDepthAttachmentFormat(ctx.getDepthImageFormat())
         .addVertexBinding(0, sizeof(DebugDrawVertex))
