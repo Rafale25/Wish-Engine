@@ -34,7 +34,7 @@ add_subdirectory(${THIRD_PARTY_DIR}/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
 # VMA #
 # marked as SYSTEM to suppress warnings
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${THIRD_PARTY_DIR}/VMA/include)
-add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA)
+add_subdirectory(${THIRD_PARTY_DIR}/VMA ${CMAKE_CURRENT_BINARY_DIR}/VMA SYSTEM)
 # -- #
 
 # KTX
