@@ -592,7 +592,7 @@ void Context::init() {
 
     // TODO: should probably not be hardcoded
     // const std::vector<const char*> searchPaths = { "./src/shaders" };
-    const std::vector<const char*> searchPaths = { "./libs/WishEngine/src/shaders" };
+    const std::vector<const char*> searchPaths = { SHADERS_PATH };
     slang::SessionDesc slangSessionDesc{
         .targets = slangTargets.data(),
         .targetCount = SlangInt(slangTargets.size()),

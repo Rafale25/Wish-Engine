@@ -101,6 +101,10 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    SHADERS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/"
+)
+
 # set_target_properties(${PROJECT_NAME} PROPERTIES
 #     RUNTIME_OUTPUT_DIRECTORY "./"
 # )
