@@ -6,10 +6,10 @@
 class Geometry {
     public:
         // TODO: add position and size args (https://moderngl-window.readthedocs.io/en/latest/reference/geometry.html)
-        // static Buffer quad_2d();
         static void cube(Buffer& buffer, const glm::vec3& size, const glm::vec3& center);
+        static void quadFullscreen(Buffer& bufferVertices, Buffer& bufferIndices);
 
-        // void quad_fs() {}
+        // static Buffer quad_2d();
         // void sphere() {}
         // void bbox() {}
 };
