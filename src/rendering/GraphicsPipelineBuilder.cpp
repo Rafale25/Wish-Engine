@@ -110,7 +110,7 @@ Pipeline GraphicsPipelineBuilder::build() {
     // TODO: need to add stage depending on shaders stage included
     VkPushConstantRange pushConstantRange{
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-        .size = sizeof(VkDeviceAddress)
+        .size = 80//sizeof(VkDeviceAddress) + sizeof(glm::mat4)
     };
     VkPipelineLayoutCreateInfo pipelineLayoutCI{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
