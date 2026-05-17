@@ -31,7 +31,8 @@ public:
 
     void init();
     void run();
-    void setView(View& view);
+    void viewPush(View& view);
+    void viewPop();
 
     bool isKeyDown(int32_t key) const;
     // bool isKeyDown(int32_t key) const;
@@ -107,9 +108,13 @@ public:
     #endif
 
 private:
+    View& currentView() const { return *m_viewStack.back(); }
+
     // GLFW
-    DefaultView m_defaultView;
-    View* m_currentView = &m_defaultView;
+    std::vector<View*> m_viewStack;
+
+    // DefaultView m_defaultView;
+    // View* m_currentView = &m_defaultView;
     std::string applicationName = "Vulkan Application";
 
     int32_t m_keystate[512] = {0}; // GLFW_LAST_KEY iS 348 but I glfw is included only in cpp implementation file (so we take 512 to be safe)

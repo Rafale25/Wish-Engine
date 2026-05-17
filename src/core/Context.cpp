@@ -38,9 +38,9 @@ void Context::keyCallback(GLFWwindow* window, int key, int scancode, int action,
     }
 
     if (action == GLFW_PRESS)
-        ctx->m_currentView->onKeyPress(key);
+        ctx->currentView().onKeyPress(key);
     else if (action == GLFW_RELEASE)
-        ctx->m_currentView->onKeyRelease(key);
+        ctx->currentView().onKeyRelease(key);
 }
 
 void Context::cursorPositionCallback(GLFWwindow* window, double x, double y)
@@ -50,13 +50,13 @@ void Context::cursorPositionCallback(GLFWwindow* window, double x, double y)
     ctx->m_mouseDeltaX = x - ctx->m_mouseX;
     ctx->m_mouseDeltaY = y - ctx->m_mouseY;
 
-    ctx->m_currentView->onMouseMotion(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
+    ctx->currentView().onMouseMotion(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
 
     ctx->m_mouseX = x;
     ctx->m_mouseY = y;
 
     // if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-    //     ctx->m_currentView->onMouseDrag(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
+    //     ctx->currentView().onMouseDrag(x, y, ctx->m_mouseDeltaX, ctx->m_mouseDeltaY);
     // }
 }
 
@@ -65,9 +65,9 @@ void Context::cursorPositionCallback(GLFWwindow* window, double x, double y)
 //     Context* ctx = (Context*)glfwGetWindowUserPointer(window);
 
 //     if (action == GLFW_PRESS)
-//         ctx->m_currentView->onMousePress(ctx->m_mouseX, ctx->m_mouseY, button);
+//         ctx->currentView().onMousePress(ctx->m_mouseX, ctx->m_mouseY, button);
 //     else if (action == GLFW_RELEASE)
-//         ctx->m_currentView->onMouseRelease(ctx->m_mouseX, ctx->m_mouseY, button);
+//         ctx->currentView().onMouseRelease(ctx->m_mouseX, ctx->m_mouseY, button);
 // }
 
 void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -77,17 +77,25 @@ void Context::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
     ctx->m_framebufferWidth = width;
     ctx->m_framebufferHeight = height;
-    ctx->m_currentView->onResize(width, height);
+    // ctx->currentView().onResize(width, height);
+    ctx->currentView().onResize(width, height);
 }
 
-void Context::setView(View& view) {
-    m_currentView->onExitView();
-    m_currentView = &view;
+void Context::viewPush(View& view) {
+    if (!m_viewStack.empty()) currentView().onExitView();
+    m_viewStack.push_back(&view);
     view.onEnterView();
 
-    // call resize callback on first frame
-    glfwGetFramebufferSize(window, &m_framebufferWidth, &m_framebufferHeight);
-    framebufferSizeCallback(window, m_framebufferWidth, m_framebufferHeight);
+    currentView().onResize(m_framebufferWidth, m_framebufferHeight);
+}
+
+void Context::viewPop() {
+    if (m_viewStack.empty()) return;
+    currentView().onExitView();
+    m_viewStack.pop_back();
+    if (!m_viewStack.empty()) currentView().onEnterView();
+
+    currentView().onResize(m_framebufferWidth, m_framebufferHeight);
 }
 
 bool Context::isKeyDown(int32_t key) const {
@@ -138,16 +146,16 @@ void Context::run() {
         double deltaTime = time - lastFrameTime;
         lastFrameTime = time;
 
-        m_currentView->onUpdate(m_timeSinceStart, deltaTime);
+        currentView().onUpdate(m_timeSinceStart, deltaTime);
 
         beginRendering();
-        m_currentView->onDraw(m_timeSinceStart, deltaTime);
+        currentView().onDraw(m_timeSinceStart, deltaTime);
         endRendering();
 
         glfwPollEvents();
     }
 
-    m_currentView->onExitView();
+    currentView().onExitView();
 }
 
 void Context::initWindow() {
