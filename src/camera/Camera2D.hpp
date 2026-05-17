@@ -24,7 +24,8 @@ public:
     glm::vec3 getPosition() const;
     void setPosition(const glm::vec3& p);
 
-private:
+// private:
+public:
     glm::vec3 m_position = {0.0f, 0.0f, 0.0f};
     float m_left = 0.0f;
     float m_right = 0.0f;
