@@ -1,4 +1,3 @@
-/src/skybox/*.jpg
 /build/
 .cache
 
@@ -10,3 +9,5 @@
 *.ini
 
 .vs
+
+/tests/assets/skybox/*.jpg

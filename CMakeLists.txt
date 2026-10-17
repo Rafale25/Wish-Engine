@@ -108,3 +108,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 # set_target_properties(${PROJECT_NAME} PROPERTIES
 #     RUNTIME_OUTPUT_DIRECTORY "./"
 # )
+
+option(MYVULKANLIB_BUILD_TESTS "Build test application" ON)
+
+if(MYVULKANLIB_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
